@@ -25,7 +25,7 @@
  *   OTHER DEALINGS IN THE SOFTWARE.
  ***************************************************************************/
 
-#include "CEGUI/Sizef.h"
+#include "CEGUI/Size.h"
 
 #include <boost/test/unit_test.hpp>
 

@@ -27,17 +27,13 @@
 #include "CEGUI/ImageManager.h"
 #include "CEGUI/Logger.h"
 #include "CEGUI/Exceptions.h"
-#include "CEGUI/SharedStringStream.h"
 
 // for the XML parsing part.
 #include "CEGUI/XMLParser.h"
 #include "CEGUI/XMLAttributes.h"
 #include "CEGUI/System.h"
 #include "CEGUI/Texture.h"
-#include "CEGUI/BitmapImage.h"
-#include "CEGUI/svg/SVGImage.h"
-#include "CEGUI/svg/SVGData.h"
-#include "CEGUI/svg/SVGDataManager.h"
+#include "CEGUI/BasicImage.h"
 
 #include <cstdio>
 #include <algorithm>
@@ -73,16 +69,13 @@ const String ImageElement( "Image" );
 const String ImagesetImageFileAttribute( "imagefile" );
 const String ImagesetResourceGroupAttribute( "resourceGroup" );
 const String ImagesetNameAttribute( "name" );
-const String ImagesetTypeAttribute( "type" );
 const String ImagesetNativeHorzResAttribute( "nativeHorzRes" );
 const String ImagesetNativeVertResAttribute( "nativeVertRes" );
 const String ImagesetAutoScaledAttribute( "autoScaled" );
 const String ImageTextureAttribute( "texture" );
-const String ImageSVGDataAttribute( "SVGData" );
+const String ImageTypeAttribute( "type" );
 const String ImageNameAttribute( "name" );
 const String ImagesetVersionAttribute( "version" );
-// Internal Strings holding XML element and attribute defaults
-const String ImageTypeAttributeDefault( "BitmapImage" );
 
 //----------------------------------------------------------------------------//
 // note: The assets' versions aren't usually the same as CEGUI version, they
@@ -97,23 +90,19 @@ const String NativeVersion( "2" );
 //----------------------------------------------------------------------------//
 // Internal variables used when parsing XML
 static Texture* s_texture = 0;
-static SVGData* s_SVGData = 0;
-static CEGUI::String s_imagesetType = "";
 static AutoScaledMode s_autoScaled = ASM_Disabled;
 static Sizef s_nativeResolution(640.0f, 480.0f);
 
 //----------------------------------------------------------------------------//
 ImageManager::ImageManager()
 {
-    String addressStr = SharedStringstream::GetPointerAddressAsString(this);
-
+    char addr_buff[32];
+    std::sprintf(addr_buff, "(%p)", static_cast<void*>(this));
     Logger::getSingleton().logEvent(
-        "CEGUI::ImageManager Singleton created. (" + addressStr + ")");
+        "[CEGUI::ImageManager] Singleton created " + String(addr_buff));
 
-    // self-register the built in 'BitmapImage' type.
-    addImageType<BitmapImage>("BitmapImage");
-    // self-register the built in 'SVGImage' type.
-    addImageType<SVGImage>("SVGImage");
+    // self-register the built in 'BasicImage' type.
+    addImageType<BasicImage>("BasicImage");
 }
 
 //----------------------------------------------------------------------------//
@@ -124,10 +113,10 @@ ImageManager::~ImageManager()
     while (!d_factories.empty())
         removeImageType(d_factories.begin()->first);
 
-    String addressStr = SharedStringstream::GetPointerAddressAsString(this);
-
+    char addr_buff[32];
+    std::sprintf(addr_buff, "(%p)", static_cast<void*>(this));
     Logger::getSingleton().logEvent(
-       "CEGUI::ImageManager Singleton destroyed (" + addressStr + ")");
+       "[CEGUI::ImageManager] Singleton destroyed " + String(addr_buff));
 }
 
 //----------------------------------------------------------------------------//
@@ -139,9 +128,9 @@ void ImageManager::removeImageType(const String& name)
         return;
 
     Logger::getSingleton().logEvent(
-        "[ImageManager] Unregistered Image type: " + name);
+        "[CEGUI::ImageManager] Unregistered Image type: " + name);
 
-    delete i->second;
+    CEGUI_DELETE_AO i->second;
 	d_factories.erase(name);
 }
 
@@ -155,23 +144,24 @@ bool ImageManager::isImageTypeAvailable(const String& name) const
 Image& ImageManager::create(const String& type, const String& name)
 {
     if (d_images.find(name) != d_images.end())
-        throw AlreadyExistsException(
-            "Image already exists: " + name);
+        CEGUI_THROW(AlreadyExistsException(
+            "Image already exists: " + name));
 
     ImageFactoryRegistry::iterator i(d_factories.find(type));
 
     if (i == d_factories.end())
-        throw UnknownObjectException(
-            "Unknown Image type: " + type);
+        CEGUI_THROW(UnknownObjectException(
+            "Unknown Image type: " + type));
 
     ImageFactory* factory = i->second;
     Image& image = factory->create(name);
     d_images[name] = std::make_pair(&image, factory);
 
-        String addressStr = SharedStringstream::GetPointerAddressAsString(&image);
+    char addr_buff[32];
+    sprintf(addr_buff, "%p", static_cast<void*>(&image));
 
     Logger::getSingleton().logEvent(
-        "[ImageManager] Created image: '" + name + "' (" + addressStr + 
+        "[ImageManager] Created image: '" + name + "' (" + addr_buff + 
         ") of type: " + type);
 
     return image;
@@ -180,21 +170,24 @@ Image& ImageManager::create(const String& type, const String& name)
 //----------------------------------------------------------------------------//
 Image& ImageManager::create(const XMLAttributes& attributes)
 {
+    static const String type_default("BasicImage");
+    
+    const String& type(attributes.getValueAsString(ImageTypeAttribute, type_default));
     const String& name(attributes.getValueAsString(ImageNameAttribute));
 
     if (name.empty())
-        throw InvalidRequestException(
-            "Invalid (empty) image name passed to create.");
+        CEGUI_THROW(InvalidRequestException(
+            "Invalid (empty) image name passed to create."));
 
     if (d_images.find(name) != d_images.end())
-        throw AlreadyExistsException(
-            "Image already exists: " + name);
+        CEGUI_THROW(AlreadyExistsException(
+            "Image already exists: " + name));
 
-    ImageFactoryRegistry::iterator i(d_factories.find(s_imagesetType));
+    ImageFactoryRegistry::iterator i(d_factories.find(type));
 
     if (i == d_factories.end())
-        throw UnknownObjectException(
-            "Unknown Image type: " + s_imagesetType);
+        CEGUI_THROW(UnknownObjectException(
+            "Unknown Image type: " + type));
 
     ImageFactory* factory = i->second;
     Image& image = factory->create(attributes);
@@ -204,20 +197,22 @@ Image& ImageManager::create(const XMLAttributes& attributes)
     if (image.getName() != name)
     {
         const String message(
-            "Factory for type: " + s_imagesetType + " created Image named: " +
+            "Factory for type: " + type + " created Image named: " +
             image.getName() + ".  Was expecting name: " + name);
             
         factory->destroy(image);
 
-        throw InvalidRequestException(message);
+        CEGUI_THROW(InvalidRequestException(message));
     }
 
     d_images[name] = std::make_pair(&image, factory);
 
-    String addressStr = SharedStringstream::GetPointerAddressAsString(&image);
+    char addr_buff[32];
+    sprintf(addr_buff, "%p", static_cast<void*>(&image));
+
     Logger::getSingleton().logEvent(
-        "[ImageManager] Created image: '" + name + "' (" + addressStr + 
-        ") of type: " + s_imagesetType);
+        "[ImageManager] Created image: '" + name + "' (" + addr_buff + 
+        ") of type: " + type);
 
     return image;
 }
@@ -262,8 +257,8 @@ Image& ImageManager::get(const String& name) const
     ImageMap::const_iterator i = d_images.find(name);
     
     if (i == d_images.end())
-        throw UnknownObjectException(
-            "Image not defined: " + name);
+        CEGUI_THROW(UnknownObjectException(
+            "Image not defined: " + name));
 
     return *i->second.first;
 }
@@ -275,9 +270,9 @@ bool ImageManager::isDefined(const String& name) const
 }
 
 //----------------------------------------------------------------------------//
-unsigned int ImageManager::getImageCount() const
+uint ImageManager::getImageCount() const
 {
-    return static_cast<unsigned int>(d_images.size());
+    return static_cast<uint>(d_images.size());
 }
 
 //----------------------------------------------------------------------------//
@@ -314,7 +309,7 @@ void ImageManager::destroyImageCollection(const String& prefix,
 }
 
 //----------------------------------------------------------------------------//
-void ImageManager::addBitmapImageFromFile(const String& name, const String& filename,
+void ImageManager::addFromImageFile(const String& name, const String& filename,
                                     const String& resource_group)
 {
     // create texture from image
@@ -322,10 +317,10 @@ void ImageManager::addBitmapImageFromFile(const String& name, const String& file
         createTexture(name, filename,
             resource_group.empty() ? d_imagesetDefaultResourceGroup : resource_group);
 
-    BitmapImage& image = static_cast<BitmapImage&>(create("BitmapImage", name));
+    BasicImage& image = static_cast<BasicImage&>(create("BasicImage", name));
     image.setTexture(tex);
-    const Rectf rect(glm::vec2(0.0f, 0.0f), tex->getOriginalDataSize());
-    image.setImageArea(rect);
+    const Rectf rect(Vector2f(0.0f, 0.0f), tex->getOriginalDataSize());
+    image.setArea(rect);
 }
 
 //----------------------------------------------------------------------------//
@@ -368,15 +363,8 @@ void ImageManager::elementStartLocal(const String& element,
 }
 
 //----------------------------------------------------------------------------//
-void ImageManager::elementEndLocal(const String& element)
+void ImageManager::elementEndLocal(const String&)
 {
-    // ensure that everything is reset to default values when the Imageset ends
-    if (element == ImagesetElement)
-    {
-        s_texture = 0;
-        s_SVGData = 0;
-        s_imagesetType = "";
-    }
 }
 
 //----------------------------------------------------------------------------//
@@ -384,10 +372,6 @@ void ImageManager::elementImagesetStart(const XMLAttributes& attributes)
 {
     // get name of the imageset.
     const String name(attributes.getValueAsString(ImagesetNameAttribute));
-    // get name of the imageset.
-    s_imagesetType = attributes.getValueAsString(ImagesetTypeAttribute,
-                                                 "BitmapImage");
-    
     // get texture image filename
     const String filename(
         attributes.getValueAsString(ImagesetImageFileAttribute));
@@ -398,22 +382,28 @@ void ImageManager::elementImagesetStart(const XMLAttributes& attributes)
     Logger& logger(Logger::getSingleton());
     logger.logEvent("[ImageManager] Started creation of Imageset from XML specification:");
     logger.logEvent("[ImageManager] ---- CEGUI Imageset name: " + name);
-    logger.logEvent("[ImageManager] ---- Source image file: " + filename);
-    logger.logEvent("[ImageManager] ---- Source resource group: " +
+    logger.logEvent("[ImageManager] ---- Source texture file: " + filename);
+    logger.logEvent("[ImageManager] ---- Source texture resource group: " +
                     (resource_group.empty() ? "(Default)" : resource_group));
 
     validateImagesetFileVersion(attributes);
 
-    if(s_imagesetType == "BitmapImage")
-        retrieveImagesetTexture(name, filename, resource_group);
-    else if(s_imagesetType == "SVGImage")
-        retrieveImagesetSVGData(name, filename, resource_group);
+    Renderer* const renderer = System::getSingleton().getRenderer();
+
+    // if the texture already exists, 
+    if (renderer->isTextureDefined(name))
+    {
+        Logger::getSingleton().logEvent(
+            "[ImageManager] WARNING: Using existing texture: " + name);
+        s_texture = &renderer->getTexture(name);
+    }
     else
     {
-        CEGUI::String message = "Imageset type: \"" + s_imagesetType + "\" is unknown.";
-        throw UnknownObjectException(message);
+        // create texture from image
+        s_texture = &renderer->createTexture(name, filename,
+            resource_group.empty() ? d_imagesetDefaultResourceGroup :
+                                     resource_group);
     }
-            
 
     // set native resolution for imageset
     s_nativeResolution = Sizef(
@@ -434,24 +424,17 @@ void ImageManager::validateImagesetFileVersion(const XMLAttributes& attrs)
     if (version == NativeVersion)
         return;
 
-    throw InvalidRequestException(
+    CEGUI_THROW(InvalidRequestException(
         "You are attempting to load an imageset of version '" + version +
         "' but this CEGUI version is only meant to load imagesets of version '" +
         NativeVersion + "'. Consider using the migrate.py script bundled with "
-        "CEGUI Unified Editor to migrate your data.");
+        "CEGUI Unified Editor to migrate your data."));
 }
 
 //----------------------------------------------------------------------------//
 void ImageManager::elementImageStart(const XMLAttributes& attributes)
 {
-    String image_data_name = "";
-
-    if (s_imagesetType == "BitmapImage")
-        image_data_name = s_texture->getName();
-    else if (s_imagesetType == "SVGImage")
-        image_data_name = s_SVGData->getName();
-
-    const String image_name(image_data_name + '/' +
+    const String image_name(s_texture->getName() + '/' +
         attributes.getValueAsString(ImageNameAttribute));
 
     if (isDefined(image_name))
@@ -463,20 +446,11 @@ void ImageManager::elementImageStart(const XMLAttributes& attributes)
 
     XMLAttributes rw_attrs(attributes);
 
-    // rewrite the name attribute to include the underlying image data's (Texture's or
-    // SVGData's) name
+    // rewrite the name attribute to include the texture name
     rw_attrs.add(ImageNameAttribute, image_name);
 
-    if (s_imagesetType == "BitmapImage")
-    {
-        if (!rw_attrs.exists(ImageTextureAttribute))
-            rw_attrs.add(ImageTextureAttribute, image_data_name);
-    }
-    else if (s_imagesetType == "SVGImage")
-    {
-        if (!rw_attrs.exists(ImageSVGDataAttribute))
-            rw_attrs.add(ImageSVGDataAttribute, image_data_name);
-    }
+    if (!rw_attrs.exists(ImageTextureAttribute))
+        rw_attrs.add(ImageTextureAttribute, s_texture->getName());
 
     if (!rw_attrs.exists(ImagesetAutoScaledAttribute))
         rw_attrs.add(ImagesetAutoScaledAttribute,
@@ -484,55 +458,14 @@ void ImageManager::elementImageStart(const XMLAttributes& attributes)
 
     if (!rw_attrs.exists(ImagesetNativeHorzResAttribute))
         rw_attrs.add(ImagesetNativeHorzResAttribute,
-                     PropertyHelper<std::uint32_t>::toString(static_cast<std::uint32_t>(s_nativeResolution.d_width)));
+                     PropertyHelper<float>::toString(s_nativeResolution.d_width));
 
     if (!rw_attrs.exists(ImagesetNativeVertResAttribute))
         rw_attrs.add(ImagesetNativeVertResAttribute,
-                     PropertyHelper<std::uint32_t>::toString(static_cast<std::uint32_t>(s_nativeResolution.d_height)));
+                     PropertyHelper<float>::toString(s_nativeResolution.d_height));
 
-    d_deleteChainedHandler = false;
+    d_deleteChaniedHandler = false;
     d_chainedHandler = &create(rw_attrs);
-}
-
-//----------------------------------------------------------------------------//
-void ImageManager::retrieveImagesetTexture(const String& name, const String& filename, const String &resource_group)
-{
-    Renderer* const renderer = System::getSingleton().getRenderer();
-
-    // if the texture already exists
-    if (renderer->isTextureDefined(name))
-    {
-        Logger::getSingleton().logEvent(
-            "[ImageManager] WARNING: Using existing texture: " + name);
-        s_texture = &renderer->getTexture(name);
-    }
-    else
-    {
-        // create texture from image
-        s_texture = &renderer->createTexture(name, filename,
-            resource_group.empty() ? d_imagesetDefaultResourceGroup :
-            resource_group);
-    }
-}
-
-//----------------------------------------------------------------------------//
-void ImageManager::retrieveImagesetSVGData(const String& name, const String& filename, const String &resource_group)
-{
-    SVGDataManager& svgDataManager = SVGDataManager::getSingleton();
-
-    if (svgDataManager.isSVGDataDefined(name))
-    {
-        Logger::getSingleton().logEvent(
-            "[ImageManager] WARNING: Using existing SVGData: " + name);
-        s_SVGData = &svgDataManager.getSVGData(name);
-    }
-    else
-    {
-        // Create SVGData from the specified file
-        s_SVGData = &svgDataManager.create(name, filename,
-            resource_group.empty() ? d_imagesetDefaultResourceGroup :
-            resource_group);
-    }
 }
 
 //----------------------------------------------------------------------------//

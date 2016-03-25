@@ -49,10 +49,10 @@ namespace CEGUI
 */
 struct CEGUIEXPORT MCLGridRef
 {
-	MCLGridRef(unsigned int r, unsigned int c) : row(r), column(c) {}
+	MCLGridRef(uint r, uint c) : row(r), column(c) {}
 
-	unsigned int	row;		//!< Zero based row index.
-	unsigned int	column;		//!< Zero based column index.
+	uint	row;		//!< Zero based row index.
+	uint	column;		//!< Zero based column index.
 
 	// operators
 	MCLGridRef& operator=(const MCLGridRef& rhs);
@@ -238,9 +238,9 @@ public:
 		Return the number of columns in the multi-column list
 
 	\return
-		unsigned int value equal to the number of columns in the list.
+		uint value equal to the number of columns in the list.
 	*/
-	unsigned int	getColumnCount(void) const;
+	uint	getColumnCount(void) const;
 
 
 	/*!
@@ -248,9 +248,9 @@ public:
 		Return the number of rows in the multi-column list.
 
 	\return
-		unsigned int value equal to the number of rows currently in the list.
+		uint value equal to the number of rows currently in the list.
 	*/
-	unsigned int	getRowCount(void) const;
+	uint	getRowCount(void) const;
 
 
 	/*!
@@ -263,8 +263,8 @@ public:
 
 	\exception	InvalidRequestException		thrown if there are no columns in this multi column list.
 	*/
-	unsigned int	getSortColumn(void) const;
-	unsigned int	getSortColumnID(void) const;
+	uint	getSortColumn(void) const;
+	uint	getSortColumnID(void) const;
 
 	/*!
 	\brief
@@ -278,7 +278,7 @@ public:
 
 	\exception	InvalidRequestException		thrown if no attached column has the requested ID.
 	*/
-	unsigned int	getColumnWithID(unsigned int col_id) const;
+	uint	getColumnWithID(uint col_id) const;
 
 
 	/*!
@@ -293,7 +293,7 @@ public:
 
 	\exception InvalidRequestException	thrown if no columns header has the requested text.
 	*/
-	unsigned int	getColumnWithHeaderText(const String& text) const;
+	uint	getColumnWithHeaderText(const String& text) const;
 
 
 	/*!
@@ -318,7 +318,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a column is out of range.
 	*/
-	UDim getColumnHeaderWidth(unsigned int col_idx) const;
+	UDim getColumnHeaderWidth(uint col_idx) const;
 
 
 	/*!
@@ -343,7 +343,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a col_idx is out of range.
 	*/
-	ListHeaderSegment&	getHeaderSegmentForColumn(unsigned int col_idx) const;
+	ListHeaderSegment&	getHeaderSegmentForColumn(uint col_idx) const;
 
 
 	/*!
@@ -358,7 +358,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a item is not attached to the list box.
 	*/
-	unsigned int	getItemRowIndex(const ListboxItem* item) const;
+	uint	getItemRowIndex(const ListboxItem* item) const;
 
 
 	/*!
@@ -373,7 +373,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a item is not attached to the list box.
 	*/
-	unsigned int	getItemColumnIndex(const ListboxItem* item) const;
+	uint	getItemColumnIndex(const ListboxItem* item) const;
 
 
 	/*!
@@ -422,7 +422,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a col_idx is out of range.
 	*/
-	bool	isListboxItemInColumn(const ListboxItem* item, unsigned int col_idx) const;
+	bool	isListboxItemInColumn(const ListboxItem* item, uint col_idx) const;
 
 
 	/*!
@@ -441,7 +441,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a row_idx is out of range.
 	*/
-	bool	isListboxItemInRow(const ListboxItem* item, unsigned int row_idx) const;
+	bool	isListboxItemInRow(const ListboxItem* item, uint row_idx) const;
 
 
 	/*!
@@ -476,7 +476,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a start_item is not attached to the list box, or if \a col_idx is out of range.
 	*/
-	ListboxItem*	findColumnItemWithText(const String& text, unsigned int col_idx, const ListboxItem* start_item) const;
+	ListboxItem*	findColumnItemWithText(const String& text, uint col_idx, const ListboxItem* start_item) const;
 
 
 	/*!
@@ -497,7 +497,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a start_item is not attached to the list box, or if \a row_idx is out of range.
 	*/
-	ListboxItem*	findRowItemWithText(const String& text, unsigned int row_idx, const ListboxItem* start_item) const;
+	ListboxItem*	findRowItemWithText(const String& text, uint row_idx, const ListboxItem* start_item) const;
 
 
 	/*!
@@ -557,9 +557,9 @@ public:
 		Return the number of selected ListboxItems attached to this list box.
 
 	return
-		unsigned int value equal to the number of ListboxItems attached to this list box that are currently selected.
+		uint value equal to the number of ListboxItems attached to this list box that are currently selected.
 	*/
-	unsigned int	getSelectedCount(void) const;
+	uint	getSelectedCount(void) const;
 
 
 	/*!
@@ -589,7 +589,7 @@ public:
 	\return
 		ID code of the nominated selection column.
 	*/
-	unsigned int	getNominatedSelectionColumnID(void) const;
+	uint	getNominatedSelectionColumnID(void) const;
 
 
 	/*!
@@ -600,7 +600,7 @@ public:
 	\return
 		Zero based index of the nominated selection column.
 	*/
-	unsigned int	getNominatedSelectionColumn(void) const;
+	uint	getNominatedSelectionColumn(void) const;
 
 
 	/*!
@@ -611,7 +611,7 @@ public:
 	\return
 		Zero based index of the nominated selection column.
 	*/
-	unsigned int	getNominatedSelectionRow(void) const;
+	uint	getNominatedSelectionRow(void) const;
 
 
 	/*!
@@ -658,7 +658,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a col_idx is out of range
 	*/
-	unsigned int	getColumnID(unsigned int col_idx) const;
+	uint	getColumnID(uint col_idx) const;
 
 
 	/*!
@@ -673,7 +673,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a row_idx is out of range
 	*/
-	unsigned int	getRowID(unsigned int row_idx) const;
+	uint	getRowID(uint row_idx) const;
 
 
 	/*!
@@ -688,7 +688,7 @@ public:
 
 	\exception	InvalidRequestException		thrown if no row has the requested ID.
 	*/
-	unsigned int	getRowWithID(unsigned int row_id) const;
+	uint	getRowWithID(uint row_id) const;
 
 
     /*!
@@ -752,13 +752,13 @@ public:
     \brief
         Return the pixel width of the widest item in the given column
     */
-    float   getWidestColumnItemWidth(unsigned int col_idx) const;
+    float   getWidestColumnItemWidth(uint col_idx) const;
 
     /*!
     \brief
         Return, in pixels, the height of the highest item in the given row.
     */
-    float   getHighestRowItemHeight(unsigned int row_idx) const;
+    float   getHighestRowItemHeight(uint row_idx) const;
 
     /*!
     \brief
@@ -812,7 +812,7 @@ public:
 	\return
 		Nothing.
 	*/
-	void	addColumn(const String& text, unsigned int col_id, const UDim& width);
+	void	addColumn(const String& text, uint col_id, const UDim& width);
 	void	addColumn(const String& value);
 
 	/*!
@@ -835,7 +835,7 @@ public:
 	\return
 		Nothing.
 	*/
-	void	insertColumn(const String& text, unsigned int col_id, const UDim& width, unsigned int position);
+	void	insertColumn(const String& text, uint col_id, const UDim& width, uint position);
 
 
 	/*!
@@ -850,7 +850,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a col_idx is invalid.
 	*/
-	void	removeColumn(unsigned int col_idx);
+	void	removeColumn(uint col_idx);
 
 
 	/*!
@@ -865,7 +865,7 @@ public:
 
 	\exception InvalidRequestException	thrown if no column with \a col_id is available on this list box.
 	*/
-	void	removeColumnWithID(unsigned int col_id);
+	void	removeColumnWithID(uint col_id);
 
 
 	/*!
@@ -883,7 +883,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a col_idx is invalid.
 	*/
-	void	moveColumn(unsigned int col_idx, unsigned int position);
+	void	moveColumn(uint col_idx, uint position);
 
 
 	/*!
@@ -901,7 +901,7 @@ public:
 
 	\exception InvalidRequestException	thrown if no column with \a col_id is available on this list box.
 	*/
-	void	moveColumnWithID(unsigned int col_id, unsigned int position);
+	void	moveColumnWithID(uint col_id, uint position);
 
 
 	/*!
@@ -918,7 +918,7 @@ public:
 	\return
 		Initial zero based index of the new row.
 	*/
-	unsigned int	addRow(unsigned int row_id = 0);
+	uint	addRow(uint row_id = 0);
 
 
 	/*!
@@ -943,7 +943,7 @@ public:
 
 	\exception InvalidRequestException	thrown if no column with the specified ID is attached to the list box.
 	*/
-	unsigned int	addRow(ListboxItem* item, unsigned int col_id, unsigned int row_id = 0);
+	uint	addRow(ListboxItem* item, uint col_id, uint row_id = 0);
 
 
 	/*!
@@ -964,7 +964,7 @@ public:
 	\return
 		Zero based index where the row was actually inserted.
 	*/
-	unsigned int	insertRow(unsigned int row_idx, unsigned int row_id = 0);
+	uint	insertRow(uint row_idx, uint row_id = 0);
 
 
 	/*!
@@ -993,7 +993,7 @@ public:
 
 	\exception InvalidRequestException	thrown if no column with the specified ID is attached to the list box.
 	*/
-	unsigned int	insertRow(ListboxItem* item, unsigned int col_id, unsigned int row_idx, unsigned int row_id = 0);
+	uint	insertRow(ListboxItem* item, uint col_id, uint row_idx, uint row_id = 0);
 
 
 	/*!
@@ -1008,7 +1008,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a row_idx is invalid.
 	*/
-	void	removeRow(unsigned int row_idx);
+	void	removeRow(uint row_idx);
 
 
 	/*!
@@ -1047,7 +1047,7 @@ public:
 
 	\exception InvalidRequestException	thrown if no column with ID \a col_id exists, or of \a row_idx is out of range.
 	*/
-	void	setItem(ListboxItem* item, unsigned int col_id, unsigned int row_idx);
+	void	setItem(ListboxItem* item, uint col_id, uint row_idx);
 
 
 	/*!
@@ -1077,7 +1077,7 @@ public:
 
 	\exception InvalidRequestException	thrown if no column has ID code \a col_id.
 	*/
-	void	setNominatedSelectionColumnID(unsigned int col_id);
+	void	setNominatedSelectionColumnID(uint col_id);
 
 
 	/*!
@@ -1092,7 +1092,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a col_idx is out of range.
 	*/
-	void	setNominatedSelectionColumn(unsigned int col_idx);
+	void	setNominatedSelectionColumn(uint col_idx);
 
 
 	/*!
@@ -1107,7 +1107,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a row_idx is out of range.
 	*/
-	void	setNominatedSelectionRow(unsigned int row_idx);
+	void	setNominatedSelectionRow(uint row_idx);
 
 
 	/*!
@@ -1135,7 +1135,7 @@ public:
 
 	\exception InvalidRequestException	thrown if col_idx is out of range.
 	*/
-	void	setSortColumn(unsigned int col_idx);
+	void	setSortColumn(uint col_idx);
 
 
 	/*!
@@ -1150,7 +1150,7 @@ public:
 
 	\exception InvalidRequestException	thrown if col_id is invalid for this list box.
 	*/
-	void	setSortColumnByID(unsigned int col_id);
+	void	setSortColumnByID(uint col_id);
 
 
 	/*!
@@ -1263,7 +1263,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a column is out of range.
 	*/
-	void	setColumnHeaderWidth(unsigned int col_idx, const UDim& width);
+	void	setColumnHeaderWidth(uint col_idx, const UDim& width);
 
 
 	/*!
@@ -1318,7 +1318,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a col_idx is out of range.
 	*/
-	void	autoSizeColumnHeader(unsigned int col_idx);
+	void	autoSizeColumnHeader(uint col_idx);
 
 
 	/*!
@@ -1336,7 +1336,7 @@ public:
 
 	\exception InvalidRequestException	thrown if \a row_idx is out of range
 	*/
-	void	setRowID(unsigned int row_idx, unsigned int row_id);
+	void	setRowID(uint row_idx, uint row_id);
 
     /*!
     \brief
@@ -1414,7 +1414,7 @@ public:
     \return
         Nothing.
     */
-    void ensureRowIsVisible(unsigned int row_idx);
+    void ensureRowIsVisible(uint row_idx);
 
     /*!
     \brief
@@ -1427,7 +1427,7 @@ public:
     \return
         Nothing.
     */
-    void ensureColumnIsVisible(unsigned int column_idx);
+    void ensureColumnIsVisible(uint column_idx);
 
     /*!
     \brief
@@ -1512,7 +1512,7 @@ protected:
 		ListboxItem that is under window pixel co-ordinate \a pt, or NULL if no
 		item is under that position.
 	*/
-    ListboxItem*	getItemAtPoint(const glm::vec2& pt) const;
+	ListboxItem*	getItemAtPoint(const Vector2f& pt) const;
 
 
 	/*!
@@ -1528,14 +1528,14 @@ protected:
 	\brief
 		Set select state for all items in the given row
 	*/
-	void	setSelectForItemsInRow(unsigned int row_idx, bool state);
+	void	setSelectForItemsInRow(uint row_idx, bool state);
 
 
 	/*!
 	\brief
 		Set select state for all items in the given column
 	*/
-	void	setSelectForItemsInColumn(unsigned int col_idx, bool state);
+	void	setSelectForItemsInColumn(uint col_idx, bool state);
 
 
 	/*!
@@ -1545,7 +1545,7 @@ protected:
 
 	\exception InvalidRequestException	thrown if \a col_idx is invalid.
 	*/
-	void	moveColumn_impl(unsigned int col_idx, unsigned int position);
+	void	moveColumn_impl(uint col_idx, uint position);
 
 
 	/*!
@@ -1652,14 +1652,15 @@ protected:
 	*/
 	virtual	void	onListColumnMoved(WindowEventArgs& e);
 
+
 	/*************************************************************************
 		Overridden Event handlers
 	*************************************************************************/
 	virtual	void	onFontChanged(WindowEventArgs& e);
-	virtual void	onSized_impl(ElementEventArgs& e);
-    virtual void    onCursorPressHold(CursorInputEventArgs& e);
-    virtual void    onScroll(CursorInputEventArgs& e);
-    virtual void    onSemanticInputEvent(SemanticEventArgs& e);
+	virtual void	onSized(ElementEventArgs& e);
+	virtual void	onMouseButtonDown(MouseEventArgs& e);
+	virtual	void	onMouseWheel(MouseEventArgs& e);
+
 
 	/*************************************************************************
 		Handlers for subscribed events
@@ -1680,14 +1681,15 @@ protected:
     */
 	struct ListRow
 	{
-		typedef	std::vector<ListboxItem*> RowItems;
+		typedef	std::vector<ListboxItem*
+            CEGUI_VECTOR_ALLOC(ListboxItem*)> RowItems;
 		RowItems	d_items;
-		unsigned int		d_sortColumn;
-		unsigned int		d_rowID;
+		uint		d_sortColumn;
+		uint		d_rowID;
 
 		// operators
-		ListboxItem* const& operator[](unsigned int idx) const	{return d_items[idx];}
-		ListboxItem*&	operator[](unsigned int idx) {return d_items[idx];}
+		ListboxItem* const& operator[](uint idx) const	{return d_items[idx];}
+		ListboxItem*&	operator[](uint idx) {return d_items[idx];}
 		bool	operator<(const ListRow& rhs) const;
 		bool	operator>(const ListRow& rhs) const;
 	};
@@ -1709,8 +1711,8 @@ protected:
 
 	// selection abilities.
 	SelectionMode	d_selectMode;	//!< Holds selection mode (represented by settings below).
-	unsigned int	d_nominatedSelectCol;	//!< Nominated column for single column selection.
-	unsigned int	d_nominatedSelectRow;	//!< Nominated row for single row selection.
+	uint	d_nominatedSelectCol;	//!< Nominated column for single column selection.
+	uint	d_nominatedSelectRow;	//!< Nominated row for single row selection.
 	bool	d_multiSelect;			//!< Allow multiple selections.
 	bool	d_fullRowSelect;		//!< All items in a row are selected.
 	bool	d_fullColSelect;		//!< All items in a column are selected.
@@ -1718,10 +1720,11 @@ protected:
 	bool	d_useNominatedCol;		//!< true if we use a nominated col to select.
 	ListboxItem*	d_lastSelected;	//!< holds pointer to the last selected item (used in range selections)
 
-    unsigned int    d_columnCount;          //!< keeps track of the number of columns.
+    uint    d_columnCount;          //!< keeps track of the number of columns.
 
 	// storage of items in the list box.
-	typedef std::vector<ListRow> ListItemGrid;
+	typedef std::vector<ListRow
+        CEGUI_VECTOR_ALLOC(ListRow)> ListItemGrid;
 	ListItemGrid	d_grid;			//!< Holds the list box data.
 
     //! whether header size will be considered when auto-sizing columns.
@@ -1735,7 +1738,6 @@ private:
 		Private methods
 	*************************************************************************/
 	void	addMultiColumnListProperties(void);
-    void    handleSelection(const glm::vec2& position, bool cumulative, bool range);
 };
 
 

@@ -57,8 +57,10 @@ namespace CEGUI
         */
         FalagardPopupMenu(const String& type);
 
-        void createRenderGeometry() override;
-        Rectf getItemRenderArea(void) const override;
+        // overridden from PopupMenu base class.
+        void render();
+        //void sizeToContent_impl(void);
+        Rectf getItemRenderArea(void) const;
     };
 
 } // End of  CEGUI namespace section

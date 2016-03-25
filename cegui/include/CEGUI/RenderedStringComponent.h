@@ -27,11 +27,9 @@
 #ifndef _CEGUIRenderedStringComponent_h_
 #define _CEGUIRenderedStringComponent_h_
 
-#include "CEGUI/Sizef.h"
-#include "CEGUI/Rectf.h"
+#include "CEGUI/Size.h"
+#include "CEGUI/Rect.h"
 #include "CEGUI/falagard/Enums.h"
-
-#include <vector>
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
@@ -46,7 +44,8 @@ namespace CEGUI
     Base class representing a part of a rendered string.  The 'part' represented
     may be a text string, an image or some other entity.
 */
-class CEGUIEXPORT RenderedStringComponent
+class CEGUIEXPORT RenderedStringComponent :
+    public AllocatedObject<RenderedStringComponent>
 {
 public:
     //! Destructor.
@@ -82,11 +81,10 @@ public:
     bool getAspectLock() const;
 
     //! draw the component.
-    virtual std::vector<GeometryBuffer*> createRenderGeometry(
-        const Window* ref_wnd,
-        const glm::vec2& position, const ColourRect* mod_colours,
-        const Rectf* clip_rect, const float vertical_space,
-        const float space_extra) const = 0;
+    virtual void draw(const Window* ref_wnd, GeometryBuffer& buffer,
+                      const Vector2f& position, const ColourRect* mod_colours,
+                      const Rectf* clip_rect, const float vertical_space,
+                      const float space_extra) const = 0;
 
     //! return the pixel size of the rendered component.
     virtual Sizef getPixelSize(const Window* ref_wnd) const = 0;
@@ -100,32 +98,13 @@ public:
         new RenderedStringComponent of the same type as '*this' holding the
         left side of the split, and leaving the right side of the split in
         this object.
-
-    \param was_word_split
-        return whether any word was split into 2 or more lines, because it
-        couldn't fit in a single line.
     
     \exception InvalidRequestException
         thrown if the RenderedStringComponent does not support being split.
     */
     virtual RenderedStringComponent* split(const Window* ref_wnd,
                                            float split_point,
-                                           bool first_component,
-                                           bool& was_word_split) = 0;
-
-    /*!
-    \brief
-        split the component as close to split_point as possible, returning a
-        new RenderedStringComponent of the same type as '*this' holding the
-        left side of the split, and leaving the right side of the split in
-        this object.
-    
-    \exception InvalidRequestException
-        thrown if the RenderedStringComponent does not support being split.
-    */
-    RenderedStringComponent* split(const Window* ref_wnd,
-                                   float split_point,
-                                   bool first_component);
+                                           bool first_component) = 0;
 
     //! clone this component.
     virtual RenderedStringComponent* clone() const = 0;

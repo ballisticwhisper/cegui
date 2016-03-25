@@ -1,7 +1,7 @@
 /***********************************************************************
 	created:	15/6/2004
 	author:		Paul D Turner
-
+	
 	purpose:	Implementation of List header segment widget.
 *************************************************************************/
 /***************************************************************************
@@ -27,7 +27,7 @@
  *   OTHER DEALINGS IN THE SOFTWARE.
  ***************************************************************************/
 #include "CEGUI/widgets/ListHeaderSegment.h"
-#include "CEGUI/Cursor.h"
+#include "CEGUI/MouseCursor.h"
 #include "CEGUI/CoordConverter.h"
 #include "CEGUI/ImageManager.h"
 
@@ -58,12 +58,12 @@ const float	ListHeaderSegment::SegmentMoveThreshold	= 12.0f;
 
 
 /*************************************************************************
-	Constructor for list header segment base class
+	Constructor for list header segment base class	
 *************************************************************************/
 ListHeaderSegment::ListHeaderSegment(const String& type, const String& name) :
 	Window(type, name),
-	d_sizingCursor(0),
-	d_movingCursor(0),
+	d_sizingMouseCursor(0),
+	d_movingMouseCursor(0),
 	d_splitterSize(DefaultSizingArea),
 	d_splitterHover(false),
 	d_dragSizing(false),
@@ -80,7 +80,7 @@ ListHeaderSegment::ListHeaderSegment(const String& type, const String& name) :
 
 
 /*************************************************************************
-	Destructor for list header segment base class.
+	Destructor for list header segment base class.	
 *************************************************************************/
 ListHeaderSegment::~ListHeaderSegment(void)
 {
@@ -110,7 +110,7 @@ void ListHeaderSegment::setSizingEnabled(bool setting)
 
 
 /*************************************************************************
-	Set the current sort direction set for this segment.
+	Set the current sort direction set for this segment.	
 *************************************************************************/
 void ListHeaderSegment::setSortDirection(SortDirection sort_dir)
 {
@@ -128,7 +128,7 @@ void ListHeaderSegment::setSortDirection(SortDirection sort_dir)
 
 
 /*************************************************************************
-	Set whether drag moving is allowed for this segment.
+	Set whether drag moving is allowed for this segment.	
 *************************************************************************/
 void ListHeaderSegment::setDragMovingEnabled(bool setting)
 {
@@ -160,7 +160,7 @@ void ListHeaderSegment::setClickable(bool setting)
 
 
 /*************************************************************************
-	Handler called when segment is clicked.
+	Handler called when segment is clicked.	
 *************************************************************************/
 void ListHeaderSegment::onSegmentClicked(WindowEventArgs& e)
 {
@@ -169,7 +169,7 @@ void ListHeaderSegment::onSegmentClicked(WindowEventArgs& e)
 
 
 /*************************************************************************
-	Handler called when the sizer/splitter is double-clicked.
+	Handler called when the sizer/splitter is double-clicked.	
 *************************************************************************/
 void ListHeaderSegment::onSplitterDoubleClicked(WindowEventArgs& e)
 {
@@ -215,8 +215,8 @@ void ListHeaderSegment::onSegmentDragStart(WindowEventArgs& e)
 
 
 /*************************************************************************
-    Handler called when the user stops dragging the segment
-    (releases pointer)
+	Handler called when the user stops dragging the segment
+	(releases mouse button)
 *************************************************************************/
 void ListHeaderSegment::onSegmentDragStop(WindowEventArgs& e)
 {
@@ -256,34 +256,34 @@ void ListHeaderSegment::onClickableSettingChanged(WindowEventArgs& e)
 /*************************************************************************
 	Processing for drag-sizing the segment
 *************************************************************************/
-void ListHeaderSegment::doDragSizing(const glm::vec2& local_cursor)
+void ListHeaderSegment::doDragSizing(const Vector2f& local_mouse)
 {
-    float delta = local_cursor.x - d_dragPoint.x;
+    float delta = local_mouse.d_x - d_dragPoint.d_x;
 
     // store this so we can work out how much size actually changed
-    const float orgWidth = d_pixelSize.d_width;
+    float orgWidth = d_pixelSize.d_width;
 
     // ensure that we only size to the set constraints.
     //
     // NB: We are required to do this here due to our virtually unique sizing nature; the
     // normal system for limiting the window size is unable to supply the information we
     // require for updating our internal state used to manage the dragging, etc.
-    const float maxWidth(CoordConverter::asAbsolute(d_maxSize.d_width, getRootContainerSize().d_width));
-    const float minWidth(CoordConverter::asAbsolute(d_minSize.d_width, getRootContainerSize().d_width));
-    const float newWidth = orgWidth + delta;
+    float maxWidth(CoordConverter::asAbsolute(d_maxSize.d_width, getRootContainerSize().d_width));
+    float minWidth(CoordConverter::asAbsolute(d_minSize.d_width, getRootContainerSize().d_width));
+    float newWidth = orgWidth + delta;
 
     if (maxWidth != 0.0f && newWidth > maxWidth)
         delta = maxWidth - orgWidth;
     else if (newWidth < minWidth)
         delta = minWidth - orgWidth;
-
+    
     // update segment area rect
     // URGENT FIXME: The pixel alignment will be done automatically again, right? Why is it done here? setArea_impl will do it!
     URect area(d_area.d_min.d_x, d_area.d_min.d_y, d_area.d_max.d_x + UDim(0,/*PixelAligned(*/delta/*)*/), d_area.d_max.d_y);
     setArea_impl(area.d_min, area.getSize());
 
-    // move the dragging point so cursor remains 'attached' to edge of segment
-    d_dragPoint.x += d_pixelSize.d_width - orgWidth;
+    // move the dragging point so mouse remains 'attached' to edge of segment
+    d_dragPoint.d_x += d_pixelSize.d_width - orgWidth;
 
     WindowEventArgs args(this);
     onSegmentSized(args);
@@ -291,21 +291,21 @@ void ListHeaderSegment::doDragSizing(const glm::vec2& local_cursor)
 
 
 /*************************************************************************
-    Processing for drag-moving the segment
+	Processing for drag-moving the segment
 *************************************************************************/
-void ListHeaderSegment::doDragMoving(const glm::vec2& local_cursor)
+void ListHeaderSegment::doDragMoving(const Vector2f& local_mouse)
 {
-    // calculate movement deltas.
-    const float deltaX = local_cursor.x - d_dragPoint.x;
-    const float deltaY = local_cursor.y - d_dragPoint.y;
+	// calculate movement deltas.
+	float deltaX = local_mouse.d_x - d_dragPoint.d_x;
+	float deltaY = local_mouse.d_y - d_dragPoint.d_y;
 
 	// update 'ghost' position
-    d_dragPosition.x += deltaX;
-    d_dragPosition.y += deltaY;
+	d_dragPosition.d_x += deltaX;
+	d_dragPosition.d_y += deltaY;
 
 	// update drag point.
-    d_dragPoint.x += deltaX;
-    d_dragPoint.y += deltaY;
+	d_dragPoint.d_x += deltaX;
+	d_dragPoint.d_y += deltaY;
 
 	WindowEventArgs args(this);
 	onSegmentDragPositionChanged(args);
@@ -323,10 +323,11 @@ void ListHeaderSegment::initDragMoving(void)
 		d_dragMoving = true;
 		d_segmentPushed = false;
 		d_segmentHover = false;
-        d_dragPosition = glm::vec2(0, 0);
+		d_dragPosition.d_x = 0.0f;
+		d_dragPosition.d_y = 0.0f;
 
-        // setup new indicator
-        getGUIContext().getCursor().setImage(d_movingCursor);
+		// setup new cursor
+		getGUIContext().getMouseCursor().setImage(d_movingMouseCursor);
 
 		// Trigger the event
 		WindowEventArgs args(this);
@@ -346,8 +347,8 @@ void ListHeaderSegment::initSizingHoverState(void)
 	{
 		d_splitterHover = true;
 
-        // change the cursor.
-        getGUIContext().getCursor().setImage(d_sizingCursor);
+		// change the mouse cursor.
+		getGUIContext().getMouseCursor().setImage(d_sizingMouseCursor);
 
 		// trigger redraw so 'sizing' area can be highlighted if needed.
 		invalidate();
@@ -355,7 +356,7 @@ void ListHeaderSegment::initSizingHoverState(void)
 
 	// reset segment hover as needed.
 	if (d_segmentHover)
-	{
+	{	
 		d_segmentHover = false;
 		invalidate();
 	}
@@ -372,7 +373,7 @@ void ListHeaderSegment::initSegmentHoverState(void)
 	if (d_splitterHover)
 	{
 		d_splitterHover = false;
-        getGUIContext().getCursor().setImage(getCursor());
+		getGUIContext().getMouseCursor().setImage(getMouseCursor());
 		invalidate();
 	}
 
@@ -389,12 +390,12 @@ void ListHeaderSegment::initSegmentHoverState(void)
 	Return true if move threshold for initiating drag-moving has been
 	exceeded.
 *************************************************************************/
-bool ListHeaderSegment::isDragMoveThresholdExceeded(const glm::vec2& local_cursor)
+bool ListHeaderSegment::isDragMoveThresholdExceeded(const Vector2f& local_mouse)
 {
-    // see if cursor has moved far enough to start move operation
-    // calculate movement deltas.
-    const float deltaX = local_cursor.x - d_dragPoint.x;
-    const float deltaY = local_cursor.y - d_dragPoint.y;
+	// see if mouse has moved far enough to start move operation
+	// calculate movement deltas.
+	float	deltaX = local_mouse.d_x - d_dragPoint.d_x;
+	float	deltaY = local_mouse.d_y - d_dragPoint.d_y;
 
 	if ((deltaX > SegmentMoveThreshold) || (deltaX < -SegmentMoveThreshold) ||
 		(deltaY > SegmentMoveThreshold) || (deltaY < -SegmentMoveThreshold))
@@ -405,39 +406,42 @@ bool ListHeaderSegment::isDragMoveThresholdExceeded(const glm::vec2& local_curso
 	{
 		return false;
 	}
+
 }
 
 
 /*************************************************************************
-    Handler for when cursor position changes in widget area (or captured)
+	Handler for when mouse position changes in widget area (or captured)
 *************************************************************************/
-void ListHeaderSegment::onCursorMove(CursorInputEventArgs& e)
+void ListHeaderSegment::onMouseMove(MouseEventArgs& e)
 {
 	// base class processing
-	Window::onCursorMove(e);
+	Window::onMouseMove(e);
 
-    // convert cursor position to something local
-    const glm::vec2 local_cursor_pos(CoordConverter::screenToWindow(*this, e.position));
+	//
+	// convert mouse position to something local
+	//
+	Vector2f localMousePos(CoordConverter::screenToWindow(*this, e.position));
 
 	// handle drag sizing
 	if (d_dragSizing)
 	{
-        doDragSizing(local_cursor_pos);
+		doDragSizing(localMousePos);
 	}
 	// handle drag moving
 	else if (d_dragMoving)
 	{
-        doDragMoving(local_cursor_pos);
-    }
-    // not sizing, is cursor in the widget area?
-    else if (isHit(e.position))
-    {
-        // cursor in sizing area & sizing is enabled
-        if ((local_cursor_pos.x > (d_pixelSize.d_width - d_splitterSize)) && d_sizingEnabled)
+		doDragMoving(localMousePos);
+	}
+	// not sizing, is mouse in the widget area?
+	else if (isHit(e.position))
+	{
+		// mouse in sizing area & sizing is enabled
+		if ((localMousePos.d_x > (d_pixelSize.d_width - d_splitterSize)) && d_sizingEnabled)
 		{
 			initSizingHoverState();
 		}
-        // cursor not in sizing area and/or sizing not enabled
+		// mouse not in sizing area and/or sizing not enabled
 		else
 		{
 			initSegmentHoverState();
@@ -445,30 +449,34 @@ void ListHeaderSegment::onCursorMove(CursorInputEventArgs& e)
 			// if we are pushed but not yet drag moving
 			if (d_segmentPushed && !d_dragMoving)
 			{
-                if (isDragMoveThresholdExceeded(local_cursor_pos))
-                {
-                    initDragMoving();
-                }
+				if (isDragMoveThresholdExceeded(localMousePos))
+				{
+					initDragMoving();
+				}
+
 			}
+
 		}
+
 	}
-    // cursor is no longer within the widget area...
+	// mouse is no longer within the widget area...
 	else
 	{
 		// only change settings if change is required
 		if (d_splitterHover)
 		{
 			d_splitterHover = false;
-            getGUIContext().getCursor().setImage(getCursor());
+			getGUIContext().getMouseCursor().setImage(getMouseCursor());
 			invalidate();
 		}
 
 		// reset segment hover state if not already done.
 		if (d_segmentHover)
-		{
+		{	
 			d_segmentHover = false;
 			invalidate();
 		}
+
 	}
 
 	++e.handled;
@@ -476,25 +484,25 @@ void ListHeaderSegment::onCursorMove(CursorInputEventArgs& e)
 
 
 /*************************************************************************
-    Handler for when cursor is pressed
+	Handler for when mouse buttons are pushed
 *************************************************************************/
-void ListHeaderSegment::onCursorPressHold(CursorInputEventArgs& e)
+void ListHeaderSegment::onMouseButtonDown(MouseEventArgs& e)
 {
 	// base class processing
-    Window::onCursorPressHold(e);
+	Window::onMouseButtonDown(e);
 
-    if (e.source == CIS_Left)
+	if (e.button == LeftButton)
 	{
 		// ensure all inputs come to us for now
 		if (captureInput())
 		{
-            // get position of cursor as co-ordinates local to this window.
-            const glm::vec2 localPos(CoordConverter::screenToWindow(*this, e.position));
+			// get position of mouse as co-ordinates local to this window.
+			Vector2f localPos(CoordConverter::screenToWindow(*this, e.position));
 
 			// store drag point for possible sizing or moving operation.
 			d_dragPoint = localPos;
 
-            // if the cursor is in the sizing area
+			// if the mouse is in the sizing area
 			if (d_splitterHover)
 			{
 				if (isSizingEnabled())
@@ -502,28 +510,32 @@ void ListHeaderSegment::onCursorPressHold(CursorInputEventArgs& e)
 					// setup the 'dragging' state variables
 					d_dragSizing = true;
 				}
+
 			}
 			else
 			{
 				d_segmentPushed = true;
 			}
+
 		}
+
 		++e.handled;
 	}
+
 }
 
 
 /*************************************************************************
-    Handler for when the cursor is activated
+	Handler for when mouse buttons area released
 *************************************************************************/
-void ListHeaderSegment::onCursorActivate(CursorInputEventArgs& e)
+void ListHeaderSegment::onMouseButtonUp(MouseEventArgs& e)
 {
 	// base class processing
-    Window::onCursorActivate(e);
+	Window::onMouseButtonUp(e);
 
-    if (e.source == CIS_Left)
+	if (e.button == LeftButton)
 	{
-		// if we were pushed and cursor was released (activated) within our segment area
+		// if we were pushed and mouse was released within our segment area
 		if (d_segmentPushed && d_segmentHover)
 		{
 			WindowEventArgs args(this);
@@ -531,8 +543,8 @@ void ListHeaderSegment::onCursorActivate(CursorInputEventArgs& e)
 		}
 		else if (d_dragMoving)
 		{
-            getGUIContext().getCursor().setImage(getCursor());
-
+			getGUIContext().getMouseCursor().setImage(getMouseCursor());
+			
 			WindowEventArgs args(this);
 			onSegmentDragStop(args);
 		}
@@ -541,15 +553,37 @@ void ListHeaderSegment::onCursorActivate(CursorInputEventArgs& e)
 		releaseInput();
 		++e.handled;
 	}
+
 }
 
+
 /*************************************************************************
-    Handler for when cursor leaves the widget area (uncaptured)
+	Handler for when a mouse button is double-clicked
 *************************************************************************/
-void ListHeaderSegment::onCursorLeaves(CursorInputEventArgs& e)
+void ListHeaderSegment::onMouseDoubleClicked(MouseEventArgs& e)
 {
 	// base class processing
-    Window::onCursorLeaves(e);
+	Window::onMouseDoubleClicked(e);
+
+	// if double-clicked on splitter / sizing area
+	if ((e.button == LeftButton) && d_splitterHover)
+	{
+		WindowEventArgs args(this);
+		onSplitterDoubleClicked(args);
+
+		++e.handled;
+	}
+
+}
+
+
+/*************************************************************************
+	Handler for when mouse leaves the widget area (uncaptured)
+*************************************************************************/
+void ListHeaderSegment::onMouseLeaves(MouseEventArgs& e)
+{
+	// base class processing
+	Window::onMouseLeaves(e);
 
 	d_splitterHover = false;
 	d_dragSizing = false;
@@ -557,26 +591,9 @@ void ListHeaderSegment::onCursorLeaves(CursorInputEventArgs& e)
 	invalidate();
 }
 
-void ListHeaderSegment::onSemanticInputEvent(SemanticEventArgs& e)
-{
-    // base class processing
-    Window::onSemanticInputEvent(e);
-
-    if (isDisabled())
-        return;
-
-    if (e.d_semanticValue == SV_SelectWord && e.d_payload.source == CIS_Left &&
-        d_splitterHover)
-    {
-        WindowEventArgs args(this);
-        onSplitterDoubleClicked(args);
-
-        ++e.handled;
-    }
-}
 
 /*************************************************************************
-    Handler for when cursor input capture is lost
+	Handler for when mouse input capture is lost
 *************************************************************************/
 void ListHeaderSegment::onCaptureLost(WindowEventArgs& e)
 {
@@ -602,27 +619,27 @@ void ListHeaderSegment::addHeaderSegmentProperties(void)
         "Sizable", "Property to get/set the sizable setting of the header segment.  Value is either \"true\" or \"false\".",
         &ListHeaderSegment::setSizingEnabled, &ListHeaderSegment::isSizingEnabled, true /* TODO: Inconsistency */
     );
-
+    
     CEGUI_DEFINE_PROPERTY(ListHeaderSegment, bool,
         "Clickable", "Property to get/set the click-able setting of the header segment.  Value is either \"true\" or \"false\".",
         &ListHeaderSegment::setClickable, &ListHeaderSegment::isClickable, true
     );
-
+    
     CEGUI_DEFINE_PROPERTY(ListHeaderSegment, bool,
         "Dragable", "Property to get/set the drag-able setting of the header segment.  Value is either \"true\" or \"false\".",
         &ListHeaderSegment::setDragMovingEnabled, &ListHeaderSegment::isDragMovingEnabled, true /* TODO: Inconsistency */
     );
-
+    
     CEGUI_DEFINE_PROPERTY(ListHeaderSegment, ListHeaderSegment::SortDirection,
         "SortDirection", "Property to get/set the sort direction setting of the header segment.  Value is the text of one of the SortDirection enumerated value names.",
         &ListHeaderSegment::setSortDirection, &ListHeaderSegment::getSortDirection, ListHeaderSegment::None
     );
-
+    
     CEGUI_DEFINE_PROPERTY(ListHeaderSegment, Image*,
         "SizingCursorImage", "Property to get/set the sizing cursor image for the List Header Segment.  Value should be \"set:[imageset name] image:[image name]\".",
         &ListHeaderSegment::setSizingCursorImage, &ListHeaderSegment::getSizingCursorImage, 0
     );
-
+    
     CEGUI_DEFINE_PROPERTY(ListHeaderSegment, Image*,
         "MovingCursorImage", "Property to get/set the moving cursor image for the List Header Segment.  Value should be \"set:[imageset name] image:[image name]\".",
         &ListHeaderSegment::setMovingCursorImage, &ListHeaderSegment::getMovingCursorImage, 0
@@ -631,32 +648,32 @@ void ListHeaderSegment::addHeaderSegmentProperties(void)
 
 const Image* ListHeaderSegment::getSizingCursorImage() const
 {
-    return d_sizingCursor;
+    return d_sizingMouseCursor;
 }
 
 void ListHeaderSegment::setSizingCursorImage(const Image* image)
 {
-    d_sizingCursor = image;
+    d_sizingMouseCursor = image;
 }
 
 void ListHeaderSegment::setSizingCursorImage(const String& name)
 {
-    d_sizingCursor = &ImageManager::getSingleton().get(name);
+    d_sizingMouseCursor = &ImageManager::getSingleton().get(name);
 }
 
 const Image* ListHeaderSegment::getMovingCursorImage() const
 {
-    return d_movingCursor;
+    return d_movingMouseCursor;
 }
 
 void ListHeaderSegment::setMovingCursorImage(const Image* image)
 {
-    d_movingCursor = image;
+    d_movingMouseCursor = image;
 }
 
 void ListHeaderSegment::setMovingCursorImage(const String& name)
 {
-    d_movingCursor = &ImageManager::getSingleton().get(name);
+    d_movingMouseCursor = &ImageManager::getSingleton().get(name);
 }
 
 } // End of  CEGUI namespace section

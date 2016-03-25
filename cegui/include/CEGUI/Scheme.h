@@ -32,7 +32,6 @@
 #include "CEGUI/Base.h"
 #include "CEGUI/String.h"
 #include "CEGUI/SchemeManager.h"
-#include "CEGUI/IteratorBase.h"
 
 
 #include <vector>
@@ -56,7 +55,8 @@ namespace CEGUI
 	Imageset objects, some Font objects, and register a collection of WindowFactory objects within
 	the system which would then be in a state to serve those elements to client code.
 */
-class CEGUIEXPORT Scheme
+class CEGUIEXPORT Scheme :
+    public AllocatedObject<Scheme>
 {
 private:
     friend class Scheme_xmlHandler;
@@ -306,20 +306,21 @@ public:
     
 private:
     //! \internal This is implementation specific so we keep it private!
-    typedef std::vector<LoadableUIElement> LoadableUIElementList;
+    typedef std::vector<LoadableUIElement
+        CEGUI_VECTOR_ALLOC(LoadableUIElement)>      LoadableUIElementList;
 
 public:    
     typedef ConstVectorIterator<LoadableUIElementList> LoadableUIElementIterator;
     
     /*!
     \brief
-        Retrieves iterator for all references to XML Imagesets that are to be loaded with this Scheme
+        Retrieves iterator for all references to XML imagesets that are to be loaded with this Scheme
     */
     LoadableUIElementIterator getXMLImagesets() const;
     
     /*!
     \brief
-        Retrieves iterator for all references to image file Imagesets that are to be loaded with this Scheme
+        Retrieves iterator for all references to image file imagesets that are to be loaded with this Scheme
     */
     LoadableUIElementIterator getImageFileImagesets() const;
     
@@ -346,7 +347,8 @@ private:
         DynamicModule* dynamicModule;
         FactoryModule* factoryModule;
 
-        typedef std::vector<String> TypeList;
+        typedef std::vector<String
+            CEGUI_VECTOR_ALLOC(String)> TypeList;
 
         TypeList types;
     };
@@ -373,20 +375,24 @@ private:
 
 	LoadableUIElementList                   		d_imagesets;
 	LoadableUIElementList                   		d_imagesetsFromImages;
-	LoadableUIElementList                   		d_fontFiles;
+	LoadableUIElementList                   		d_fonts;
     
-    typedef std::vector<UIModule>                   UIModuleList;
+    typedef std::vector<UIModule
+        CEGUI_VECTOR_ALLOC(UIModule)>               UIModuleList;
 	UIModuleList                    				d_widgetModules;
     
-    typedef std::vector<UIModule>                   WRModuleList;
+    typedef std::vector<UIModule
+        CEGUI_VECTOR_ALLOC(UIModule)>               WRModuleList;
     WRModuleList                                    d_windowRendererModules;
 
-	typedef std::vector<AliasMapping>			    AliasMappingList;
+	typedef std::vector<AliasMapping
+        CEGUI_VECTOR_ALLOC(AliasMapping)>			AliasMappingList;
     AliasMappingList                                d_aliasMappings;
 
     LoadableUIElementList                       	d_looknfeels;
 
-    typedef std::vector<FalagardMapping>            FalagardMappingList;
+    typedef std::vector<FalagardMapping
+        CEGUI_VECTOR_ALLOC(FalagardMapping)>        FalagardMappingList;
     FalagardMappingList                             d_falagardMappings;
 
     static String d_defaultResourceGroup;   //!< holds default resource group

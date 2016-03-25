@@ -38,7 +38,7 @@ namespace CEGUI
     object reference.
 */
 template<typename T>
-class FunctorReferenceSlot : public SlotFunctorBase<EventArgs>
+class FunctorReferenceSlot : public SlotFunctorBase
 {
 public:
     FunctorReferenceSlot(T& functor) :

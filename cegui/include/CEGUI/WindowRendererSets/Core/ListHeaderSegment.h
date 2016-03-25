@@ -65,7 +65,7 @@ namespace CEGUI
         */
         FalagardListHeaderSegment(const String& type);
 
-        void createRenderGeometry() override;
+        void render();
     };
 
 } // End of  CEGUI namespace section

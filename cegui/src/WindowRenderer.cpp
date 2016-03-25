@@ -63,10 +63,11 @@ const WidgetLookFeel& WindowRenderer::getLookNFeel() const
 *************************************************************************/
 Rectf WindowRenderer::getUnclippedInnerRect() const
 {
-    const WidgetLookFeel& wlf(getLookNFeel());
+    const WidgetLookFeel& lf(getLookNFeel());
 
-    if(wlf.isNamedAreaPresent("inner_rect", true))
-        return wlf.getNamedArea("inner_rect").getArea().getPixelRect(*d_window, d_window->getUnclippedOuterRect().get());
+    if (lf.isNamedAreaDefined("inner_rect"))
+        return lf.getNamedArea("inner_rect").getArea().
+            getPixelRect(*d_window, d_window->getUnclippedOuterRect().get());
     else
         return d_window->getUnclippedOuterRect().get();
 }
@@ -132,48 +133,6 @@ bool WindowRenderer::handleFontRenderSizeChange(const Font* const font)
 {
     const WidgetLookFeel& lf(getLookNFeel());
     return lf.handleFontRenderSizeChange(*d_window, font);
-}
-
-//----------------------------------------------------------------------------//
-float WindowRenderer::getContentWidth() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of window renderer.");
-}
-
-//----------------------------------------------------------------------------//
-float WindowRenderer::getContentHeight() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of window renderer.");
-}
-
-//----------------------------------------------------------------------------//
-UDim WindowRenderer::getWidthOfAreaReservedForContentLowerBoundAsFuncOfWindowWidth() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of window renderer.");
-}
-
-//----------------------------------------------------------------------------//
-UDim WindowRenderer::getHeightOfAreaReservedForContentLowerBoundAsFuncOfWindowHeight() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of window renderer.");
-}
-
-//----------------------------------------------------------------------------//
-void WindowRenderer::adjustSizeToContent()
-{
-    getWindow()->adjustSizeToContent_direct();
-}
-
-//----------------------------------------------------------------------------//
-bool WindowRenderer::contentFitsForSpecifiedWindowSize(const Sizef& /*window_size*/) const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of window renderer.");
-}
-
-//----------------------------------------------------------------------------//
-bool WindowRenderer::contentFits() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of window renderer.");
 }
 
 //----------------------------------------------------------------------------//

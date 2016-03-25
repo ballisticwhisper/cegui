@@ -91,8 +91,7 @@ protected:
 	/*************************************************************************
 		Overridden Event Handlers
 	*************************************************************************/
-    virtual void    onCursorActivate(CursorInputEventArgs& e);
-    virtual void    onSemanticInputEvent(SemanticEventArgs& e);
+	virtual void	onMouseButtonUp(MouseEventArgs& e);
 };
 
 } // End of  CEGUI namespace section

@@ -1,7 +1,7 @@
 /***********************************************************************
 	created:	21/2/2004
 	author:		Paul D Turner
-
+	
 	purpose:	Forward declares all core system classes
 *************************************************************************/
 /***************************************************************************
@@ -70,15 +70,13 @@ class ImageCodec;
 class ImageManager;
 class ImagerySection;
 class Interpolator;
-class InputAggregator;
-class InputEvent;
 class JustifiedRenderedString;
 class KeyFrame;
 class LeftAlignedRenderedString;
 class LinkedEvent;
 class LinkedEventArgs;
 class Logger;
-class Cursor;
+class MouseCursor;
 class NamedElement;
 class NamedElementEventArgs;
 class NativeClipboardProvider;
@@ -86,8 +84,9 @@ class Property;
 template<typename T> class PropertyHelper;
 class PropertyReceiver;
 class PropertySet;
+class Quaternion;
 class RawDataContainer;
-class Rectf;
+template<typename T> class Rect;
 class RegexMatcher;
 class RenderedString;
 class RenderedStringComponent;
@@ -110,21 +109,19 @@ class Scheme;
 class SchemeManager;
 class ScriptFunctor;
 class ScriptModule;
-class Sizef;
+template<typename T> class Size;
 class SimpleTimer;
-class SVGImage;
 class StringTranscoder;
 class System;
+class SystemKeys;
 class Texture;
 class TextureTarget;
 class TextUtils;
 class UBox;
 class UDim;
-class UVector2;
-class URect;
-class USize;
-struct TexturedColouredVertex;
-struct ColouredVertex;
+template<typename T> class Vector2;
+template<typename T> class Vector3;
+struct Vertex;
 class WidgetLookFeel;
 class Window;
 class WindowFactory;
@@ -142,6 +139,7 @@ class XMLSerializer;
     Forward declare window / widget classes.
 *************************************************************************/
 class ButtonBase;
+class ClippedContainer;
 class Combobox;
 class ComboDropList;
 class DefaultWindow;
@@ -152,7 +150,9 @@ class GridLayoutContainer;
 class HorizontalLayoutContainer;
 class ItemEntry;
 class ItemListBase;
+class ItemListbox;
 class LayoutContainer;
+class Listbox;
 class ListboxItem;
 class ListboxTextItem;
 class ListHeader;
@@ -169,6 +169,7 @@ class RadioButton;
 class ScrollablePane;
 class Scrollbar;
 class ScrolledContainer;
+class ScrolledItemListBase;
 class SequentialLayoutContainer;
 class Slider;
 class Spinner;
@@ -178,19 +179,9 @@ class Thumb;
 class Titlebar;
 class ToggleButton;
 class Tooltip;
+class Tree;
+class TreeItem;
 class VerticalLayoutContainer;
-
-/*************************************************************************
-    Forward declare model-view classes.
-*************************************************************************/
-class ItemModel;
-class ListView;
-class ListWidget;
-class ModelIndex;
-class StandardItemModel;
-class StandardItem;
-class TreeView;
-class TreeWidget;
 
 /*************************************************************************
     Forward declare EventArg based classes.
@@ -201,32 +192,16 @@ class DragDropEventArgs;
 class FontEventArgs;
 class GUIContextEventArgs;
 class HeaderSequenceEventArgs;
-class ItemViewEventArgs;
-class ModelEventArgs;
-class CursorEventArgs;
+class KeyEventArgs;
+class MouseCursorEventArgs;
+class MouseEventArgs;
 class RegexMatchStateArgs;
 class RenderQueueEventArgs;
 class RenderTargetEventArgs;
 class ResourceEventArgs;
+class TreeEventArgs;
 class UpdateEventArgs;
 class WindowEventArgs;
-
-/*************************************************************************
-    Forward declare SVG based classes.
-*************************************************************************/
-class SVGData;
-class SVGDataManager;
-class SVGTesselator;
-
-class SVGBasicShape;
-class SVGCircle;
-class SVGLine;
-class SVGPolyline;
-class SVGRect;
-
-class SVGPaint;
-class SVGPaintStyle;
-
 
 } // End of  CEGUI namespace section
 

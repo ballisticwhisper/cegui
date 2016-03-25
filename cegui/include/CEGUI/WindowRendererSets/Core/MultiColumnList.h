@@ -42,7 +42,6 @@ namespace CEGUI
 
         States:
             - Enabled
-            - EnabledFocused
             - Disabled
 
         Named Areas:
@@ -79,8 +78,10 @@ namespace CEGUI
         */
         void cacheListboxBaseImagery();
 
-        Rectf getListRenderArea(void) const override;
-        void createRenderGeometry() override;
+        // overridden from MultiColumnList base class.
+        Rectf getListRenderArea(void) const;
+        // overridden from base class.
+        void render();
     };
 } // End of  CEGUI namespace section
 

@@ -37,14 +37,17 @@ namespace CEGUI
     Root of a class hierarchy that wrap RenderedString objects and render them
     with additional formatting.
 */
-class CEGUIEXPORT FormattedRenderedString
+class CEGUIEXPORT FormattedRenderedString :
+    public AllocatedObject<FormattedRenderedString>
 {
 public:
     //! Destructor.
     virtual ~FormattedRenderedString();
 
     virtual void format(const Window* ref_wnd, const Sizef& area_size) = 0;
-    virtual std::vector<GeometryBuffer*> createRenderGeometry(const Window* ref_wnd, const glm::vec2& position, const ColourRect* mod_colours, const Rectf* clip_rect) const = 0;
+    virtual void draw(const Window* ref_wnd, GeometryBuffer& buffer,
+                      const Vector2f& position, const ColourRect* mod_colours,
+                      const Rectf* clip_rect) const = 0;
     virtual size_t getFormattedLineCount() const = 0;
     virtual float getHorizontalExtent(const Window* ref_wnd) const = 0;
     virtual float getVerticalExtent(const Window* ref_wnd) const = 0;
@@ -54,67 +57,12 @@ public:
 
     const RenderedString& getRenderedString() const;
 
-    /*
-    \brief
-        During the last call to "format", was any word split between 2 or more
-        lines?
-
-        This can happen e.g. if word wrapping is used, and the width of a word
-        is more than that of the area of the string.
-
-    \see setWasWordSplit
-    */
-    bool wasWordSplit() const;
-
-    /*
-    \brief
-        Set a flag which indicates whether in the last call to "format", any
-        word split between 2 or more lines.
-
-        See the documentation for "wasWordSplit" for more details.
-
-    \see wasWordSplit
-    */
-    void setWasWordSplit(bool value);
-
-    /*
-    \brief
-        Get the number of text lines in the original (non-formatted) string
-        (i.e. "d_renderedString");
-
-    \see getNumOfFormattedTextLines
-    */
-    std::size_t getNumOfOriginalTextLines() const;
-
-    /*
-    \brief
-        Get the number of text lines in the formatted string.
-
-        That takes into account e.g. word-wrapping.
-
-    \see getNumOfOriginalTextLines
-    */
-    virtual std::size_t getNumOfFormattedTextLines() const;
-
 protected:
     //! Constructor.
     FormattedRenderedString(const RenderedString& string);
 
     //! RenderedString that we handle formatting for.
     const RenderedString* d_renderedString;
-
-private:
-    /*
-    \brief
-        During the last call to "format", was any word split between 2 or more
-        lines?
-
-        See the documentation for "wasWordSplit" for more details.
-
-    \see wasWordSplit
-    \see setWasWordSplit
-    */
-    bool d_wasWordSplit;
 };
 
 } // End of  CEGUI namespace section

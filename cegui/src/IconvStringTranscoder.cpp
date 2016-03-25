@@ -48,9 +48,9 @@ public:
         d_cd(iconv_open(d_toCode.c_str(), d_fromCode.c_str()))
     {
         if (d_cd == reinterpret_cast<iconv_t>(-1))
-            throw InvalidRequestException(String(
+            CEGUI_THROW(InvalidRequestException(String(
                 "Failed to create conversion descriptor from \"") +
-                d_fromCode.c_str() + "\" to \"" + d_toCode.c_str() + "\".");
+                d_fromCode.c_str() + "\" to \"" + d_toCode.c_str() + "\"."));
     }
 
     //------------------------------------------------------------------------//
@@ -83,9 +83,9 @@ public:
         else
             reason = "Unknown error.";
 
-        throw InvalidRequestException(String(
+        CEGUI_THROW(InvalidRequestException(String(
             "Failed to convert from \"") + d_fromCode.c_str() +
-            "\" to \"" + d_toCode.c_str() + "\": " + reason.c_str());
+            "\" to \"" + d_toCode.c_str() + "\": " + reason.c_str()));
     }
 
     //------------------------------------------------------------------------//
@@ -99,12 +99,12 @@ static T* iconvTranscode(IconvHelper& ich, const char* in_buf, size_t in_len)
     // Handle empty strings
     if (in_len == 0)
     {
-        T* ret_buff = new T[1];
+        T* ret_buff = CEGUI_NEW_ARRAY_PT(T, 1, CEGUI::BufferAllocator);
         ret_buff[0] = 0;
         return ret_buff;
     }
 
-    std::vector<T> out_vec;
+    std::vector<T CEGUI_VECTOR_ALLOC(T)> out_vec;
     out_vec.resize(in_len);
     size_t out_count = 0;
 
@@ -124,8 +124,9 @@ static T* iconvTranscode(IconvHelper& ich, const char* in_buf, size_t in_len)
 
         if (result != static_cast<size_t>(-1))
         {
-            T* ret_buff = new T[out_count + 1];
-            std::copy(out_vec.begin(), out_vec.begin() + out_count, ret_buff);
+            T* ret_buff = CEGUI_NEW_ARRAY_PT(T, out_count + 1,
+                                             CEGUI::BufferAllocator);
+            memcpy(ret_buff, &out_vec[0], out_count * sizeof(T));
             ret_buff[out_count] = 0;
             return ret_buff;
         }
@@ -155,6 +156,15 @@ static size_t getStringLength(const T* buffer)
 }
 
 //----------------------------------------------------------------------------//
+// Helper to correctly delete a buffer returned from iconvTranscode
+template<typename T>
+static void deleteTranscodeBuffer(T* buffer)
+{
+    CEGUI_DELETE_ARRAY_PT(
+        buffer, T, getStringLength(buffer) + 1, CEGUI::BufferAllocator);
+}
+
+//----------------------------------------------------------------------------//
 // Helper to transcode a buffer and return a string class built from it.
 template<typename String_T, typename CodeUnit_T>
 static String_T iconvTranscode(IconvHelper& ich,
@@ -162,7 +172,7 @@ static String_T iconvTranscode(IconvHelper& ich,
 {
     CodeUnit_T* tmp = iconvTranscode<CodeUnit_T>(ich, in_buf, in_len);
     String_T result(tmp);
-    delete[] tmp;
+    deleteTranscodeBuffer(tmp);
 
     return result;
 }
@@ -173,7 +183,7 @@ bool is_big_endian(void)
 {
     union
     {
-        std::uint32_t i;
+        uint32 i;
         char c[4];
     } bint = {0x01020304};
 
@@ -187,41 +197,29 @@ IconvStringTranscoder::IconvStringTranscoder()
 }
 
 //----------------------------------------------------------------------------//
-char16_t* IconvStringTranscoder::stringToUTF16(const String& input) const
+uint16* IconvStringTranscoder::stringToUTF16(const String& input) const
 {
     IconvHelper ich(UTF16PE, "UTF-8");
-
-#if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_STD
-    return iconvTranscode<char16_t>(
+    return iconvTranscode<uint16>(
         ich, input.c_str(), getStringLength(input.c_str()));
-#elif CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UNICODE
-    return iconvTranscode<char16_t>(
-        ich, input.toUtf8String().c_str(), getStringLength(input.toUtf8String().c_str()));
-#endif
 }
 
 //----------------------------------------------------------------------------//
 std::wstring IconvStringTranscoder::stringToStdWString(const String& input) const
 {
     IconvHelper ich("WCHAR_T", "UTF-8");
-
-#if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_STD
     return iconvTranscode<std::wstring, wchar_t>(
         ich, input.c_str(), getStringLength(input.c_str()));
-#elif CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UNICODE
-    return iconvTranscode<std::wstring, wchar_t>(
-        ich, input.toUtf8String().c_str(), getStringLength(input.toUtf8String().c_str()));
-#endif
 }
 
 //----------------------------------------------------------------------------//
-String IconvStringTranscoder::stringFromUTF16(const char16_t* input) const
+String IconvStringTranscoder::stringFromUTF16(const uint16* input) const
 {
 #if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UNICODE
     IconvHelper ich("UTF-8", UTF16PE);
-    return iconvTranscode<String, char>(
+    return iconvTranscode<String, utf8>(
         ich, reinterpret_cast<const char*>(input),
-        getStringLength(input) * sizeof(char16_t));
+        getStringLength(input) * sizeof(uint16));
 #else
     IconvHelper ich("WCHAR_T", UTF16PE);
     return stringFromStdWString(iconvTranscode<std::wstring, wchar_t>(
@@ -234,7 +232,7 @@ String IconvStringTranscoder::stringFromStdWString(const std::wstring& input) co
 {
 #if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UNICODE
     IconvHelper ich("UTF-8", "WCHAR_T");
-    return iconvTranscode<String, char>(
+    return iconvTranscode<String, utf8>(
         ich, reinterpret_cast<const char*>(input.c_str()),
         input.length() * sizeof(wchar_t));
 #else
@@ -283,7 +281,7 @@ String IconvStringTranscoder::stringFromStdWString(const std::wstring& input) co
                               &buf[0], &buf[buf.size()], to_next);
 
     if (result == Converter::error || result == Converter::partial)
-        throw InvalidRequestException("conversion failed.");
+        CEGUI_THROW(InvalidRequestException("conversion failed."));
 #else
     const std::ctype<wchar_t>& facet = 
         std::use_facet<std::ctype<wchar_t> >(conv_locale);
@@ -293,6 +291,12 @@ String IconvStringTranscoder::stringFromStdWString(const std::wstring& input) co
     return String(&buf[0]);
 
 #endif
+}
+
+//----------------------------------------------------------------------------//
+void IconvStringTranscoder::deleteUTF16Buffer(uint16* input) const
+{
+    deleteTranscodeBuffer(input);
 }
 
 //----------------------------------------------------------------------------//

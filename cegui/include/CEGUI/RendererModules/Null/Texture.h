@@ -46,7 +46,7 @@ public:
     const String& getName() const;
     const Sizef& getSize() const;
     const Sizef& getOriginalDataSize() const;
-    const glm::vec2& getTexelScaling() const;
+    const Vector2f& getTexelScaling() const;
     void loadFromFile(const String& filename, const String& resourceGroup);
     void loadFromMemory(const void* buffer, const Sizef& buffer_size,
                                 PixelFormat pixel_format);
@@ -76,13 +76,13 @@ protected:
     void updateCachedScaleValues();
 
     //! Counter used to provide unique texture names.
-    static std::uint32_t d_textureNumber;
+    static uint32 d_textureNumber;
     //! Size of the texture.
     Sizef d_size;
     //! original pixel of size data loaded into texture
     Sizef d_dataSize;
     //! cached pixel to texel mapping scale values.
-    glm::vec2 d_texelScaling;
+    Vector2f d_texelScaling;
     //! Name this texture was created with.
     const String d_name;
 };

@@ -107,7 +107,7 @@ void DirectFBRenderer::destroyAllGeometryBuffers()
 }
 
 //----------------------------------------------------------------------------//
-TextureTarget* DirectFBRenderer::createTextureTarget(bool addStencilBuffer)
+TextureTarget* DirectFBRenderer::createTextureTarget()
 {
     // TODO:
     return 0;
@@ -138,8 +138,8 @@ void DirectFBRenderer::destroyAllTextureTargets()
 Texture& DirectFBRenderer::createTexture(const CEGUI::String& name)
 {
     if (d_textures.find(name) != d_textures.end())
-        throw AlreadyExistsException(
-            "A texture named '" + name + "' already exists.");
+        CEGUI_THROW(AlreadyExistsException(
+            "A texture named '" + name + "' already exists."));
 
     DirectFBTexture* tex = new DirectFBTexture(d_directfb, name);
     d_textures[name] = tex;
@@ -155,8 +155,8 @@ Texture& DirectFBRenderer::createTexture(const CEGUI::String& name,
                                          const String& resourceGroup)
 {
     if (d_textures.find(name) != d_textures.end())
-        throw AlreadyExistsException(
-            "A texture named '" + name + "' already exists.");
+        CEGUI_THROW(AlreadyExistsException(
+            "A texture named '" + name + "' already exists."));
 
     DirectFBTexture* tex = new DirectFBTexture(d_directfb, name,
                                                filename, resourceGroup);
@@ -172,8 +172,8 @@ Texture& DirectFBRenderer::createTexture(const CEGUI::String& name,
                                          const Sizef& size)
 {
     if (d_textures.find(name) != d_textures.end())
-        throw AlreadyExistsException(
-            "A texture named '" + name + "' already exists.");
+        CEGUI_THROW(AlreadyExistsException(
+            "A texture named '" + name + "' already exists."));
 
     DirectFBTexture* tex = new DirectFBTexture(d_directfb, name, size);
     d_textures[name] = tex;
@@ -188,7 +188,8 @@ void DirectFBRenderer::logTextureCreation(DirectFBTexture* texture)
 {
     if (Logger* logger = Logger::getSingletonPtr())
     {
-        String addressStr = SharedStringstream::GetPointerAddressAsString(texture);
+        char addr_buff[32];
+        sprintf(addr_buff, " (%p)", static_cast<void*>(texture));
 
         logger->logEvent("[DirectFBRenderer] Created texture: " +
                          texture->getName() + addr_buff);
@@ -219,7 +220,8 @@ void DirectFBRenderer::logTextureDestruction(DirectFBTexture* texture)
 {
     if (Logger* logger = Logger::getSingletonPtr())
     {
-        String addressStr = SharedStringstream::GetPointerAddressAsString(texture);
+        char addr_buff[32];
+        sprintf(addr_buff, " (%p)", static_cast<void*>(texture));
 
         logger->logEvent("[DirectFBRenderer] Destroyed texture: " +
                          texture->getName() + addr_buff);
@@ -239,8 +241,8 @@ Texture& DirectFBRenderer::getTexture(const String& name) const
     TextureMap::const_iterator i = d_textures.find(name);
     
     if (i == d_textures.end())
-        throw UnknownObjectException(
-            "No texture named '" + name + "' is available.");
+        CEGUI_THROW(UnknownObjectException(
+            "No texture named '" + name + "' is available."));
 
     return *i->second;
 }
@@ -284,13 +286,13 @@ const Sizef& DirectFBRenderer::getDisplaySize() const
 }
 
 //----------------------------------------------------------------------------//
-const glm::vec2& DirectFBRenderer::getDisplayDPI() const
+const Vector2f& DirectFBRenderer::getDisplayDPI() const
 {
     return d_displayDPI;
 }
 
 //----------------------------------------------------------------------------//
-unsigned int DirectFBRenderer::getMaxTextureSize() const
+uint DirectFBRenderer::getMaxTextureSize() const
 {
     return 2048;
 }
@@ -324,12 +326,6 @@ DirectFBRenderer::~DirectFBRenderer()
     destroyAllGeometryBuffers();
 
     delete d_defaultTarget;
-}
-
-//----------------------------------------------------------------------------//
-bool DirectFBRenderer::isTexCoordSystemFlipped() const
-{
-    return false;
 }
 
 //----------------------------------------------------------------------------//

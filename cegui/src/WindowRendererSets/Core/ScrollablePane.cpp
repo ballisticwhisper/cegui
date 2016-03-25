@@ -66,7 +66,7 @@ namespace CEGUI
             }
             area_name += "Scroll";
 
-            if (wlf.isNamedAreaPresent(area_name))
+            if (wlf.isNamedAreaDefined(area_name))
             {
                 return wlf.getNamedArea(area_name).getArea().getPixelRect(*w);
             }
@@ -76,7 +76,7 @@ namespace CEGUI
         return wlf.getNamedArea("ViewableArea").getArea().getPixelRect(*w);
     }
 
-    void FalagardScrollablePane::createRenderGeometry()
+    void FalagardScrollablePane::render()
     {
         const StateImagery* imagery;
 

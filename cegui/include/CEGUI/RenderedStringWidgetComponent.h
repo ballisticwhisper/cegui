@@ -50,20 +50,19 @@ public:
     const Window* getWindow() const;
 
     // implementation of abstract base interface
-    std::vector<GeometryBuffer*> createRenderGeometry(const Window* ref_wnd,
-        const glm::vec2& position, const ColourRect* mod_colours,
-        const Rectf* clip_rect, const float vertical_space,
-        const float space_extra) const override;
-    Sizef getPixelSize(const Window* ref_wnd) const override;
-    bool canSplit() const override;
+    void draw(const Window* ref_wnd, GeometryBuffer& buffer,
+              const Vector2f& position, const ColourRect* mod_colours,
+              const Rectf* clip_rect, const float vertical_space,
+              const float space_extra) const;
+    Sizef getPixelSize(const Window* ref_wnd) const;
+    bool canSplit() const;
     RenderedStringWidgetComponent* split(const Window* ref_wnd,
                                          float split_point,
-                                         bool first_component,
-                                         bool& was_word_split) override;
-    RenderedStringWidgetComponent* clone() const override;
-    size_t getSpaceCount() const override;
+                                         bool first_component);
+    RenderedStringWidgetComponent* clone() const;
+    size_t getSpaceCount() const;
     void setSelection(const Window* ref_wnd,
-                      const float start, const float end) override;
+                      const float start, const float end);
 
 protected:
     Window* getEffectiveWindow(const Window* ref_wnd) const;

@@ -97,7 +97,7 @@ public:
     const String& getName() const;
     const Sizef& getSize() const;
     const Sizef& getOriginalDataSize() const;
-    const glm::vec2& getTexelScaling() const;
+    const Vector2f& getTexelScaling() const;
     void loadFromFile(const String& filename, const String& resourceGroup);
     void loadFromMemory(const void* buffer, const Sizef& buffer_size,
                         PixelFormat pixel_format);
@@ -158,11 +158,11 @@ protected:
     //! Size of the texture.
     Sizef d_size;
     //! cached image data for restoring the texture.
-    std::uint8_t* d_grabBuffer;
+    uint8* d_grabBuffer;
     //! original pixel of size data loaded into texture
     Sizef d_dataSize;
     //! cached pixel to texel mapping scale values.
-    glm::vec2 d_texelScaling;
+    Vector2f d_texelScaling;
     //! OpenGLESRenderer that created and owns this OpenGLESTexture
     OpenGLESRenderer& d_owner;
     //! Name of the texture given when it was created.

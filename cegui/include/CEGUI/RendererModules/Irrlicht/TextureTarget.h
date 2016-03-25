@@ -43,13 +43,12 @@ namespace CEGUI
 class IrrlichtTexture;
 
 //! CEGUI::TextureTarget implementation for the Irrlicht engine.
-class IRR_GUIRENDERER_API IrrlichtTextureTarget : public IrrlichtRenderTarget, public TextureTarget
+class IRR_GUIRENDERER_API IrrlichtTextureTarget : public IrrlichtRenderTarget<TextureTarget>
 {
 public:
     //! Constructor.
     IrrlichtTextureTarget(IrrlichtRenderer& owner,
-                          irr::video::IVideoDriver& driver,
-                          bool addStencilBuffer);
+                          irr::video::IVideoDriver& driver);
     //! Destructor.
     virtual ~IrrlichtTextureTarget();
 
@@ -62,12 +61,13 @@ public:
     void clear();
     Texture& getTexture() const;
     void declareRenderSize(const Sizef& sz);
+    bool isRenderingInverted() const;
 
 protected:
     //! default / initial size for the underlying texture.
     static const float DEFAULT_SIZE;
     //! static data used for creating texture names
-    static std::uint32_t s_textureNumber;
+    static uint s_textureNumber;
     //! helper to generate unique texture names
     static String generateTextureName();
 

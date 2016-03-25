@@ -29,7 +29,6 @@
 #include "CEGUI/falagard/XMLHandler.h"
 #include "CEGUI/Window.h"
 #include "CEGUI/Logger.h"
-#include "CEGUI/SharedStringStream.h"
 
 namespace CEGUI
 {
@@ -55,7 +54,7 @@ struct EventActionFunctor
             return true;
 
         default:
-            throw InvalidRequestException("invalid action.");
+            CEGUI_THROW(InvalidRequestException("invalid action."));
         }
 
         return false;
@@ -108,8 +107,8 @@ void EventAction::initialiseWidget(Window& widget) const
     Window* parent = widget.getParent();
 
     if (!parent)
-        throw InvalidRequestException(
-            "EvenAction can only be initialised on child widgets.");
+        CEGUI_THROW(InvalidRequestException(
+            "EvenAction can only be initialised on child widgets."));
 
     d_connections.insert(
         std::make_pair(makeConnectionKeyName(widget),
@@ -145,9 +144,12 @@ void EventAction::writeXMLToStream(XMLSerializer& xml_stream) const
 //----------------------------------------------------------------------------//
 String EventAction::makeConnectionKeyName(const Window& widget) const
 {
-    String addressStr = SharedStringstream::GetPointerAddressAsString(this);
+    char addr[32];
+    std::sprintf(addr, "%p", static_cast<const void *>(&widget));
 
-    return addressStr + d_eventName + FalagardXMLHelper<ChildEventAction>::toString(d_action);
+    return String(addr) +
+           d_eventName +
+           FalagardXMLHelper<ChildEventAction>::toString(d_action);
 }
 
 //----------------------------------------------------------------------------//

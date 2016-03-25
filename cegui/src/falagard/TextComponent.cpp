@@ -53,14 +53,14 @@ namespace CEGUI
 #ifndef CEGUI_BIDI_SUPPORT
         d_bidiVisualMapping(0),
 #elif defined (CEGUI_USE_FRIBIDI)
-        d_bidiVisualMapping(new FribidiVisualMapping),
+        d_bidiVisualMapping(CEGUI_NEW_AO FribidiVisualMapping),
 #elif defined (CEGUI_USE_MINIBIDI)
-        d_bidiVisualMapping(new MinibidiVisualMapping),
+        d_bidiVisualMapping(CEGUI_NEW_AO MinibidiVisualMapping),
 #else
     #error "BIDI Configuration is inconsistant, check your config!"
 #endif
         d_bidiDataValid(false),
-        d_formattedRenderedString(new LeftAlignedRenderedString(d_renderedString)),
+        d_formattedRenderedString(CEGUI_NEW_AO LeftAlignedRenderedString(d_renderedString)),
         d_lastHorzFormatting(HTF_LEFT_ALIGNED),
         d_vertFormatting(VTF_TOP_ALIGNED),
         d_horzFormatting(HTF_LEFT_ALIGNED)
@@ -68,7 +68,7 @@ namespace CEGUI
 
     TextComponent::~TextComponent()
     {
-        delete d_bidiVisualMapping;
+        CEGUI_DELETE_AO d_bidiVisualMapping;
     }
 
     TextComponent::TextComponent(const TextComponent& obj) :
@@ -77,9 +77,9 @@ namespace CEGUI
 #ifndef CEGUI_BIDI_SUPPORT
         d_bidiVisualMapping(0),
 #elif defined (CEGUI_USE_FRIBIDI)
-        d_bidiVisualMapping(new FribidiVisualMapping),
+        d_bidiVisualMapping(CEGUI_NEW_AO FribidiVisualMapping),
 #elif defined (CEGUI_USE_MINIBIDI)
-        d_bidiVisualMapping(new MinibidiVisualMapping),
+        d_bidiVisualMapping(CEGUI_NEW_AO MinibidiVisualMapping),
 #endif
         d_bidiDataValid(false),
         d_renderedString(obj.d_renderedString),
@@ -208,56 +208,63 @@ namespace CEGUI
         {
         case HTF_LEFT_ALIGNED:
             d_formattedRenderedString =
-                new LeftAlignedRenderedString(rendered_string);
+                CEGUI_NEW_AO LeftAlignedRenderedString(rendered_string);
             break;
 
         case HTF_CENTRE_ALIGNED:
             d_formattedRenderedString =
-                new CentredRenderedString(rendered_string);
+                CEGUI_NEW_AO CentredRenderedString(rendered_string);
             break;
 
         case HTF_RIGHT_ALIGNED:
             d_formattedRenderedString =
-                new RightAlignedRenderedString(rendered_string);
+                CEGUI_NEW_AO RightAlignedRenderedString(rendered_string);
             break;
 
         case HTF_JUSTIFIED:
             d_formattedRenderedString =
-                new JustifiedRenderedString(rendered_string);
+                CEGUI_NEW_AO JustifiedRenderedString(rendered_string);
             break;
 
         case HTF_WORDWRAP_LEFT_ALIGNED:
             d_formattedRenderedString =
-                new RenderedStringWordWrapper
+                CEGUI_NEW_AO RenderedStringWordWrapper
                     <LeftAlignedRenderedString>(rendered_string);
             break;
 
         case HTF_WORDWRAP_CENTRE_ALIGNED:
             d_formattedRenderedString =
-                new RenderedStringWordWrapper
+                CEGUI_NEW_AO RenderedStringWordWrapper
                     <CentredRenderedString>(rendered_string);
             break;
 
         case HTF_WORDWRAP_RIGHT_ALIGNED:
             d_formattedRenderedString =
-                new RenderedStringWordWrapper
+                CEGUI_NEW_AO RenderedStringWordWrapper
                     <RightAlignedRenderedString>(rendered_string);
             break;
 
         case HTF_WORDWRAP_JUSTIFIED:
             d_formattedRenderedString =
-                new RenderedStringWordWrapper
+                CEGUI_NEW_AO RenderedStringWordWrapper
                     <JustifiedRenderedString>(rendered_string);
             break;
         }
     }
 
-    void TextComponent::addImageRenderGeometryToWindow_impl(Window& srcWindow, Rectf& destRect,
+    void TextComponent::render_impl(Window& srcWindow, Rectf& destRect,
       const CEGUI::ColourRect* modColours, const Rectf* clipper,
       bool /*clipToDisplay*/) const
     {
     
-        updateFormatting(srcWindow, destRect.getSize());
+        CEGUI_TRY
+        {
+            updateFormatting(srcWindow, destRect.getSize());
+        }
+        CEGUI_CATCH(...)
+        {
+            return;
+        }
 
         // Get total formatted height.
         const float textHeight = d_formattedRenderedString->getVerticalExtent(&srcWindow);
@@ -268,11 +275,11 @@ namespace CEGUI
         switch(vertFormatting)
         {
         case VTF_CENTRE_ALIGNED:
-            destRect.d_min.y += (destRect.getHeight() - textHeight) * 0.5f;
+            destRect.d_min.d_y += (destRect.getHeight() - textHeight) * 0.5f;
             break;
 
         case VTF_BOTTOM_ALIGNED:
-            destRect.d_min.y = destRect.d_max.y - textHeight;
+            destRect.d_min.d_y = destRect.d_max.d_y - textHeight;
             break;
 
         default:
@@ -285,20 +292,20 @@ namespace CEGUI
         initColoursRect(srcWindow, modColours, finalColours);
 
         // add geometry for text to the target window.
-        d_formattedRenderedString->createRenderGeometry(&srcWindow, destRect.getPosition(),
-                                        &finalColours,
-                                        clipper);
+        d_formattedRenderedString->draw(&srcWindow, srcWindow.getGeometryBuffer(),
+                                        destRect.getPosition(),
+                                        &finalColours, clipper);
     }
 
     const Font* TextComponent::getFontObject(const Window& window) const
     {
-        try
+        CEGUI_TRY
         {
             return d_fontPropertyName.empty() ?
                 (d_font.empty() ? window.getFont() : &FontManager::getSingleton().get(d_font))
                 : &FontManager::getSingleton().get(window.getProperty(d_fontPropertyName));
         }
-        catch (UnknownObjectException&)
+        CEGUI_CATCH (UnknownObjectException&)
         {
             return 0;
         }
@@ -435,7 +442,7 @@ namespace CEGUI
 
         // exit if we have no font to use.
         if (!font)
-            throw InvalidRequestException("Window doesn't have a font.");
+            CEGUI_THROW(InvalidRequestException("Window doesn't have a font."));
 
         const RenderedString* rs = &d_renderedString;
         // do we fetch text from a property

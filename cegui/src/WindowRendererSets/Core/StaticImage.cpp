@@ -45,10 +45,10 @@ namespace CEGUI
             0);
     }
 
-    void FalagardStaticImage::createRenderGeometry()
+    void FalagardStaticImage::render()
     {
         // base class rendering
-        FalagardStatic::createRenderGeometry();
+        FalagardStatic::render();
 
         // render image if there is one
         if (d_image!=0)

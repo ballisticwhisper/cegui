@@ -30,17 +30,13 @@
 #include "CEGUI/Logger.h"
 #include "CEGUI/PropertyHelper.h"
 #include <iostream>
-#include <sstream>
 
 #if defined( __WIN32__ ) || defined( _WIN32)
 #   include <windows.h>
 #endif
 
 #if defined(_MSC_VER)
-#   pragma warning(push)
-#   pragma warning(disable : 4091)
 #   include <dbghelp.h>
-#   pragma warning(pop)
 #elif defined(__ANDROID__)
 #   include <android/log.h>
 #elif     (defined(__linux__) && !defined(__ANDROID__)) \
@@ -49,7 +45,7 @@
 #   include <execinfo.h>
 #   include <dlfcn.h>
 #   include <cxxabi.h>
-#   include <cstddef>
+#   include <cstdlib>
 #endif
 
 // Start of CEGUI namespace section
@@ -115,21 +111,12 @@ static void dumpBacktrace(size_t frames)
     {
         symbol->Address = stackframe.AddrPC.Offset;
         DWORD64 displacement = 0;
-
-        std::stringstream sstream;
-        sstream << "#" << frame_no << " ";
+        char signature[256];
 
         if (SymFromAddr(GetCurrentProcess(), symbol->Address, &displacement, symbol))
-        {
-            char signature[256];
             UnDecorateSymbolName(symbol->Name, signature, sizeof(signature), UNDNAME_COMPLETE);
-            sstream << signature;
-        }
         else
-        {
-            const void* addressPtr = ULongToPtr(symbol->Address);
-            sstream << addressPtr;
-        }
+            sprintf_s(signature, sizeof(signature), "%p", ULongToPtr(symbol->Address));
  
         IMAGEHLP_MODULE64 modinfo;
         modinfo.SizeOfStruct = sizeof(modinfo);
@@ -137,11 +124,12 @@ static void dumpBacktrace(size_t frames)
         const BOOL have_image_name =
             SymGetModuleInfo64(GetCurrentProcess(), symbol->Address, &modinfo);
 
-        sstream << std::hex << std::setfill('0') << std::setw(16) << displacement << std::dec;
-        sstream << " (" << have_image_name ? modinfo.LoadedImageName : "????";
-        sstream << ")";
+        char outstr[512];
+        sprintf_s(outstr, sizeof(outstr), "#%d %s +%#llx (%s)",
+                  frame_no, signature, displacement,
+                  (have_image_name ? modinfo.LoadedImageName : "????"));
 
-        logger.logEvent(CEGUI::String(sstream.str()), Errors);
+        logger.logEvent(outstr, Errors);
 
         if (++frame_no >= frames)
             break;
@@ -163,17 +151,12 @@ static void dumpBacktrace(size_t frames)
 
     for (int i = 0; i < received; ++i)
     {
-        std::string outstr;
+        char outstr[512];
         Dl_info info;
         if (dladdr(buffer[i], &info))
         {
             if (!info.dli_sname)
-            {
-                std::stringstream sstream;
-                sstream << "#" << i << " " << static_cast<const void*>(buffer[i]) << " (" <<
-                    << info.dli_fname << ")";
-                outstr = sstream.str();
-            }
+                snprintf(outstr, 512, "#%d %p (%s)", i, buffer[i], info.dli_fname);
             else
             {
                 ptrdiff_t offset = static_cast<char*>(buffer[i]) -
@@ -181,22 +164,13 @@ static void dumpBacktrace(size_t frames)
 
                 int demangle_result = 0;
                 char* demangle_name = abi::__cxa_demangle(info.dli_sname, 0, 0, &demangle_result);
-
-                std::stringstream sstream;
-                sstream << "#" << i << " " << demangle_name ? demangle_name : info.dli_sname <<
-                    " +" << std::hex << std::uppercase << std::showbase << offset << " (" <<
-                    info.dli_fname << ")";
-                outstr = sstream.str();
-
+                snprintf(outstr, 512, "#%d %s +%#tx (%s)",
+                         i, demangle_name ? demangle_name : info.dli_sname, offset, info.dli_fname);
                 std::free(demangle_name);
             }
         }
         else
-        {
-            std::stringstream sstream;
-            sstream << "#" << i << " --- error ---";
-            outstr = sstream.str();
-        }
+            snprintf(outstr, 512, "#%d --- error ---", i);
 
         logger.logEvent(outstr, Errors);
     }
@@ -227,7 +201,7 @@ Exception::Exception(const String& message, const String& name,
     d_line(line),
     d_function(function),
     d_what(name + " in function '" + function +
-           "' (" + filename + ":" + PropertyHelper<std::int32_t>::toString(line) + ") : " +
+           "' (" + filename + ":" + PropertyHelper<int>::toString(line) + ") : " +
            message)
 {
     // Log exception if possible
@@ -256,11 +230,7 @@ Exception::~Exception(void) throw()
 //----------------------------------------------------------------------------//
 const char* Exception::what() const throw()
 {
-#if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_STD) || (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8)
     return d_what.c_str();
-#elif CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32
-    return d_what.toUtf8String().c_str();
-#endif
 }
 
 //----------------------------------------------------------------------------//

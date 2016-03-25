@@ -43,11 +43,11 @@ namespace CEGUI
     OpenGLTextureTarget - Common base class for all OpenGL render targets
     based on some form of RTT support.
 */
-class OPENGL_GUIRENDERER_API OpenGLTextureTarget : public OpenGLRenderTarget, public TextureTarget
+class OPENGL_GUIRENDERER_API OpenGLTextureTarget : public OpenGLRenderTarget<TextureTarget>
 {
 public:
     //! constructor.
-    OpenGLTextureTarget(OpenGLRendererBase& owner, bool addStencilBuffer);
+    OpenGLTextureTarget(OpenGLRendererBase& owner);
     //! destructor
     virtual ~OpenGLTextureTarget();
 
@@ -55,6 +55,7 @@ public:
     bool isImageryCache() const;
     // implementation of parts of TextureTarget interface
     Texture& getTexture() const;
+    bool isRenderingInverted() const;
 
     /*!
     \brief
@@ -76,7 +77,7 @@ protected:
     //! helper to generate unique texture names
     static String generateTextureName();
     //! static data used for creating texture names
-    static std::uint32_t s_textureNumber;
+    static uint s_textureNumber;
 
     //! helper to create CEGUI::Texture d_CEGUITexture;
     void createCEGUITexture();

@@ -34,9 +34,6 @@
 #include "CEGUI/CoordConverter.h"
 #include "CEGUI/System.h"
 #include "CEGUI/Logger.h"
-#include "CEGUI/USize.h"
-#include "CEGUI/Sizef.h"
-#include "CEGUI/URect.h"
 
 #include <algorithm>
 
@@ -62,15 +59,12 @@ const String Element::EventChildAdded("ChildAdded");
 const String Element::EventChildRemoved("ChildRemoved");
 const String Element::EventZOrderChanged("ZOrderChanged");
 const String Element::EventNonClientChanged("NonClientChanged");
-const String Element::EventIsSizeAdjustedToContentChanged("IsSizeAdjustedToContentChanged");
 
 //----------------------------------------------------------------------------//
 Element::Element():
     d_parent(0),
 
     d_nonClient(false),
-    d_isWidthAdjustedToContent(false),
-    d_isHeightAdjustedToContent(false),
 
     d_area(cegui_reldim(0), cegui_reldim(0), cegui_reldim(0), cegui_reldim(0)),
     d_horizontalAlignment(HA_LEFT),
@@ -81,7 +75,7 @@ Element::Element():
     d_aspectRatio(1.0 / 1.0),
     d_pixelAligned(true),
     d_pixelSize(0.0f, 0.0f),
-    d_rotation(1, 0, 0, 0), // <-- IDENTITY
+    d_rotation(Quaternion::IDENTITY),
 
     d_unclippedOuterRect(this, &Element::getUnclippedOuterRect_impl),
     d_unclippedInnerRect(this, &Element::getUnclippedInnerRect_impl)
@@ -101,9 +95,9 @@ Element::Element(const Element& other):
 {}
 
 //----------------------------------------------------------------------------//
-void Element::setArea(const UVector2& pos, const USize& size, bool adjust_size_to_content)
+void Element::setArea(const UVector2& pos, const USize& size)
 {
-    setArea_impl(pos, size, false, true, adjust_size_to_content);
+    setArea_impl(pos, size);
 }
 
 //----------------------------------------------------------------------------//
@@ -237,7 +231,7 @@ Sizef Element::calculatePixelSize(bool skipAllPixelAlignment) const
                            getParentPixelSize());
     }
 
-    Sizef ret = CoordConverter::asAbsolute(getSize(), base_size, false);
+    Sizef ret = CoordConverter::asAbsolute(d_area.getSize(), base_size, false);
 
     // in case absMin components are larger than absMax ones,
     // max size takes precedence
@@ -271,31 +265,46 @@ Sizef Element::calculatePixelSize(bool skipAllPixelAlignment) const
         // make sure we respect current aspect mode and ratio
         ret.scaleToAspect(d_aspectMode, d_aspectRatio);
 
-        /* Make sure we haven't blown any of the hard limits. Still maintain the
-           aspect when we do this.
+        // make sure we haven't blown any of the hard limits
+        // still maintain the aspect when we do this
+        if (d_aspectMode == AM_SHRINK)
+        {
+            float ratio = 1.0f;
+            // check that we haven't blown the min size
+            if (ret.d_width < absMin.d_width)
+            {
+                ratio = absMin.d_width / ret.d_width;
+            }
+            if (ret.d_height < absMin.d_height)
+            {
+                const float newRatio = absMin.d_height / ret.d_height;
+                if (newRatio > ratio)
+                    ratio = newRatio;
+            }
 
-           NOTE: When the hard min max limits are unsatisfiable with the aspect
-                 lock mode, the result won't be limited by both limits! */
-        if (ret.d_width < absMin.d_width)
-        {
-            ret.d_height *= absMin.d_width / ret.d_width;
-            ret.d_width = absMin.d_width;
+            ret.d_width *= ratio;
+            ret.d_height *= ratio;
         }
-        else if (ret.d_height < absMin.d_height)
+        else if (d_aspectMode == AM_EXPAND)
         {
-            ret.d_width *= absMin.d_height / ret.d_height;
-            ret.d_height = absMin.d_height;
+            float ratio = 1.0f;
+            // check that we haven't blown the min size
+            if (absMax.d_width != 0.0f && ret.d_width > absMax.d_width)
+            {
+                ratio = absMax.d_width / ret.d_width;
+            }
+            if (absMax.d_height != 0.0f && ret.d_height > absMax.d_height)
+            {
+                const float newRatio = absMax.d_height / ret.d_height;
+                if (newRatio > ratio)
+                    ratio = newRatio;
+            }
+
+            ret.d_width *= ratio;
+            ret.d_height *= ratio;
         }
-        else if (absMax.d_width != 0.f  &&  ret.d_width > absMax.d_width)
-        {
-            ret.d_height *= absMax.d_width / ret.d_width;
-            ret.d_width = absMax.d_width;
-        }
-        else if (absMax.d_height != 0.f  &&  ret.d_height > absMax.d_height)
-        {
-            ret.d_width *= absMax.d_height / ret.d_height;
-            ret.d_height = absMax.d_height;
-        }
+        // NOTE: When the hard min max limits are unsatisfiable with the aspect lock mode,
+        //       the result won't be limited by both limits!
     }
 
     if (d_pixelAligned)
@@ -328,229 +337,7 @@ const Sizef& Element::getRootContainerSize() const
 }
 
 //----------------------------------------------------------------------------//
-void Element::adjustSizeToContent()
-{
-    adjustSizeToContent_direct();
-}
-
-//----------------------------------------------------------------------------//
-float Element::getContentWidth() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of element.");
-}
-
-//----------------------------------------------------------------------------//
-float Element::getContentHeight() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of element.");
-}
-
-//----------------------------------------------------------------------------//
-UDim Element::getWidthOfAreaReservedForContentLowerBoundAsFuncOfElementWidth() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of element.");
-}
-
-//----------------------------------------------------------------------------//
-UDim Element::getHeightOfAreaReservedForContentLowerBoundAsFuncOfElementHeight() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of element.");
-}
-
-/*----------------------------------------------------------------------------//
-    By definition of
-    "getWidthOfAreaReservedForContentLowerBoundAsFuncOfElementWidth" (see its
-    doc), if we let "t" be the width of the area of the element which is
-    reserved for content and "n" be the element width, then the following holds
-    true:
-
-        t >= inverse.d_scale*m + inverse.d_offset                          (1)
-
-    Therefore, for every non-negative number "c", if we want "t >= c" to be
-    true, it's sufficient to require that:
-
-        inverse.d_scale*m + inverse.d_offset >= c
-
-    Assume "inverse.d_scale > 0". Then that's equivalent to:
-
-        m >= (c - inverse.d_offset) / inverse.d_scale
-
-    If we let "a = 1/inverse.d_scale" and
-    "b = -inverse.d_offset / inverse.d_scale" then that's equivalent to:
-
-        m >= a*c +b
-
-    So we have the following: for every non-negative number "c", if
-    "m >= a*c +b" then "t >= c". Therefore, by the definition of
-    "getElementWidthLowerBoundAsFuncOfWidthOfAreaReservedForContent" (see its
-    doc), we can return:
-
-        UDim(a, b) = UDim(1.f /inverse.d_scale, -inverse.d_offset /inverse.d_scale)
-
-    Now, if "inverse.d_scale = 0" obviously all the above doesn't work.f In this
-    case we have, from (1):
-
-        t >= inverse.d_scale*m + inverse.d_offset = inverse.d_offset
-
-    Which means the width of the area of the element which is reserved for
-    content that we can guarantee is constant and doesn't depend on the element
-    width. Therefore, no matter what "a" and "b" we choose, we can't guarantee
-    that for every non-negative number "c", if "m >= a*c +b" then "t >= c"
-    (because all we know is t >= inverse.d_offset). Therefore in such a case we
-    throw an exception.
-------------------------------------------------------------------------------*/
-UDim Element::getElementWidthLowerBoundAsFuncOfWidthOfAreaReservedForContent() const
-{
-    UDim inverse(getWidthOfAreaReservedForContentLowerBoundAsFuncOfElementWidth());
-    if (inverse.d_scale == 0.f)
-        throw InvalidRequestException("Content width doesn't depend on the element width.");
-    return UDim(1.f /inverse.d_scale, -inverse.d_offset /inverse.d_scale);
-}
-
-/*----------------------------------------------------------------------------//
-    The implementation of this method is equivalent to that of
-    "getElementWidthLowerBoundAsFuncOfWidthOfAreaReservedForContent". See the
-    comment before the definition of that method for more details.
-------------------------------------------------------------------------------*/
-UDim Element::getElementHeightLowerBoundAsFuncOfHeightOfAreaReservedForContent() const
-{
-    UDim inverse(getHeightOfAreaReservedForContentLowerBoundAsFuncOfElementHeight());
-    if (inverse.d_scale == 0.f)
-        throw InvalidRequestException("Content height doesn't depend on the element height.");
-    return UDim(1.f /inverse.d_scale, -inverse.d_offset /inverse.d_scale);
-}
-
-//----------------------------------------------------------------------------//
-void Element::adjustSizeToContent_direct()
-{
-    if (!isSizeAdjustedToContent())
-        return;
-    const float epsilon = adjustSizeToContent_getEpsilon();
-    USize size_func(UDim(-1.f, -1.f), UDim(-1.f, -1.f));
-    Sizef new_pixel_size(getPixelSize());
-    if (isWidthAdjustedToContent())
-    {
-        size_func.d_width = getElementWidthLowerBoundAsFuncOfWidthOfAreaReservedForContent();
-        new_pixel_size.d_width = std::ceil((getContentWidth()+epsilon)*size_func.d_width.d_scale  +
-                                            size_func.d_width.d_offset);
-    }
-    if (isHeightAdjustedToContent())
-    {
-        size_func.d_height = getElementHeightLowerBoundAsFuncOfHeightOfAreaReservedForContent();
-        new_pixel_size.d_height = std::ceil((getContentHeight()+epsilon)*size_func.d_height.d_scale  +
-                                             size_func.d_height.d_offset);
-    }
-    if (getAspectMode() != AM_IGNORE)
-    {
-        if (isWidthAdjustedToContent())
-        {
-            if (isHeightAdjustedToContent())
-                new_pixel_size.scaleToAspect(AM_EXPAND, getAspectRatio());
-            else
-                new_pixel_size.scaleToAspect(AM_ADJUST_HEIGHT, getAspectRatio());
-        }
-        else
-        {
-            if (isHeightAdjustedToContent())
-                new_pixel_size.scaleToAspect(AM_ADJUST_WIDTH, getAspectRatio());
-        }
-    }
-    USize new_size(getSize());
-    if (isWidthAdjustedToContent()  ||  (getAspectMode() != AM_IGNORE))
-        new_size.d_width = UDim(0.f, new_pixel_size.d_width);
-    if (isHeightAdjustedToContent()  ||  (getAspectMode() != AM_IGNORE))
-        new_size.d_height = UDim(0.f, new_pixel_size.d_height);
-    setSize(new_size, false);
-}
-
-//----------------------------------------------------------------------------//
-float Element::adjustSizeToContent_getEpsilon() const
-{
-    return 1.f / 64.f;
-}
-
-/*----------------------------------------------------------------------------//
-    Return the lowest power of 2 (with non-negative integer exponent) which is
-    greater than or equal to "value".
-------------------------------------------------------------------------------*/
-static unsigned int powOf2Supremum(unsigned int value)
-{
-    unsigned int num_of_digits = 0;
-    if (value != 0)
-    {
-        --value;
-        while (value != 0)
-        {
-            ++num_of_digits;
-            value >>= 1;
-        }
-    }
-    return 1u << num_of_digits;
-}
-
-//----------------------------------------------------------------------------//
-Sizef Element::getSizeAdjustedToContent_bisection(const USize& size_func, float domain_min, float domain_max) const
-{
-    int domain_min_int(static_cast<int>(std::floor(domain_min)));
-    int domain_max_int(static_cast<int>(std::ceil(domain_max)));
-    if (domain_min_int >= domain_max_int)
-        throw InvalidRequestException("Length of domain is 0.");
-
-    /* First, enlarge the domain so that it's a power of 2 (with non-negative
-       integer exponent). This makes the bisection use only integer
-       parameters. */
-    int domain_size(domain_max_int - domain_min_int);
-    int domain_size_pow_of_2(static_cast<int>(powOf2Supremum(domain_size)));
-    domain_min_int -= domain_size_pow_of_2 - domain_size;
-
-    Sizef element_size(0.f, 0.f);
-    while (true)
-    {
-        int param((domain_min_int+domain_max_int+1) / 2);
-        float param_float(static_cast<float>(param));
-        element_size = Sizef(size_func.d_width.d_scale*param_float + size_func.d_width.d_offset,
-                             size_func.d_height.d_scale*param_float + size_func.d_height.d_offset);
-        if (domain_max_int <= domain_min_int+1)
-            break;
-        if (param_float <= domain_min)
-            domain_min_int = param;
-        else if (param_float >= domain_max    ||
-                 ((element_size.d_width >= 0)  &&
-                   (element_size.d_height >= 0)  &&
-                   contentFitsForSpecifiedElementSize(element_size)))
-            domain_max_int = param;
-        else
-            domain_min_int = param;
-    }
-    return element_size;
-}
-
-//----------------------------------------------------------------------------//
-bool Element::contentFitsForSpecifiedElementSize(const Sizef& element_size)
-  const
-{
-    return contentFitsForSpecifiedElementSize_tryByResizing(element_size);
-}
-
-//----------------------------------------------------------------------------//
-bool Element::contentFitsForSpecifiedElementSize_tryByResizing(const Sizef& element_size) const
-{
-    const USize current_size(getSize());
-    const_cast<Element*>(this)->setSize(
-      USize(UDim(0.f, element_size.d_width), UDim(0.f, element_size.d_height)), false);
-    bool ret(contentFits());
-    const_cast<Element*>(this)->setSize(current_size, false);
-    return ret;
-}
-
-//----------------------------------------------------------------------------//
-bool Element::contentFits() const
-{
-    throw InvalidRequestException("This function isn't implemented for this type of element.");
-}
-
-//----------------------------------------------------------------------------//
-void Element::setRotation(const glm::quat& rotation)
+void Element::setRotation(const Quaternion& rotation)
 {
     d_rotation = rotation;
 
@@ -562,12 +349,13 @@ void Element::setRotation(const glm::quat& rotation)
 void Element::addChild(Element* element)
 {
     if (!element)
-        throw 
-                InvalidRequestException("Can't add NULL to Element as a child!");
+        CEGUI_THROW(
+                InvalidRequestException("Can't add NULL to Element as a child!"));
 
     if (element == this)
-        throw InvalidRequestException("Can't make element its own child - "
-                                       "this->addChild(this); is forbidden.");
+        CEGUI_THROW(
+                InvalidRequestException("Can't make element its own child - "
+                                        "this->addChild(this); is forbidden."));
 
     addChild_impl(element);
     ElementEventArgs args(element);
@@ -578,10 +366,10 @@ void Element::addChild(Element* element)
 void Element::removeChild(Element* element)
 {
     if (!element)
-        throw 
+        CEGUI_THROW(
                 InvalidRequestException("NULL can't be a child of any Element, "
                                         "it makes little sense to ask for its "
-                                        "removal");
+                                        "removal"));
 
     removeChild_impl(element);
     ElementEventArgs args(element);
@@ -618,51 +406,6 @@ void Element::setNonClient(const bool setting)
 
     ElementEventArgs args(this);
     onNonClientChanged(args);
-}
-
-//----------------------------------------------------------------------------//
-void Element::setAdjustWidthToContent(bool value)
-{
-    if (d_isWidthAdjustedToContent == value)
-        return;
-    d_isWidthAdjustedToContent = value;
-    ElementEventArgs args(this);
-    onIsSizeAdjustedToContentChanged(args);
-}
-
-//----------------------------------------------------------------------------//
-void Element::setAdjustHeightToContent(bool value)
-{
-    if (d_isHeightAdjustedToContent == value)
-        return;
-    d_isHeightAdjustedToContent = value;
-    ElementEventArgs args(this);
-    onIsSizeAdjustedToContentChanged(args);
-}
-
-//----------------------------------------------------------------------------//
-void Element::onIsSizeAdjustedToContentChanged(ElementEventArgs& e)
-{
-    adjustSizeToContent();
-    fireEvent(EventIsSizeAdjustedToContentChanged, e, EventNamespace);
-}
-
-//----------------------------------------------------------------------------//
-bool Element::isWidthAdjustedToContent() const
-{
-    return d_isWidthAdjustedToContent;
-}
-
-//----------------------------------------------------------------------------//
-bool Element::isHeightAdjustedToContent() const
-{
-    return d_isHeightAdjustedToContent;
-}
-
-//----------------------------------------------------------------------------//
-bool Element::isSizeAdjustedToContent() const
-{
-    return isWidthAdjustedToContent() || isHeightAdjustedToContent();
 }
 
 //----------------------------------------------------------------------------//
@@ -719,8 +462,7 @@ void Element::addElementProperties()
     );
 
     CEGUI_DEFINE_PROPERTY(Element, AspectMode,
-        "AspectMode", "Property to get/set the 'aspect mode' setting. Value is either \"Ignore\", \"Shrink\", "
-        "\"Expand\", \"AdjustHeight\" or \"AdjustWidth\".",
+        "AspectMode", "Property to get/set the 'aspect mode' setting. Value is either \"Ignore\", \"Shrink\" or \"Expand\".",
         &Element::setAspectMode, &Element::getAspectMode, AM_IGNORE
     );
 
@@ -735,11 +477,11 @@ void Element::addElementProperties()
         &Element::setPixelAligned, &Element::isPixelAligned, true
     );
 
-    CEGUI_DEFINE_PROPERTY(Element, glm::quat,
-        "Rotation", "Property to get/set the Element's rotation. Value is a quaternion (glm::quat): "
+    CEGUI_DEFINE_PROPERTY(Element, Quaternion,
+        "Rotation", "Property to get/set the Element's rotation. Value is a quaternion: "
         "\"w:[w_float] x:[x_float] y:[y_float] z:[z_float]\""
         "or \"x:[x_float] y:[y_float] z:[z_float]\" to convert from Euler angles (in degrees).",
-        &Element::setRotation, &Element::getRotation, glm::quat(1.0, 0.0, 0.0, 0.0)
+        &Element::setRotation, &Element::getRotation, Quaternion(1.0,0.0,0.0,0.0)
     );
 
     CEGUI_DEFINE_PROPERTY(Element, bool,
@@ -747,23 +489,11 @@ void Element::addElementProperties()
         "Value is either \"true\" or \"false\".",
         &Element::setNonClient, &Element::isNonClient, false
     );
-
-    CEGUI_DEFINE_PROPERTY(Element, bool, "AdjustWidthToContent",
-        "Property to get/set whether to " "automatically adjust the element's " "width to the element's content.  "
-        "Value is either \"true\" or \"false\".",
-        &Element::setAdjustWidthToContent, &Element::isWidthAdjustedToContent, false
-    );
-
-    CEGUI_DEFINE_PROPERTY(Element, bool, "AdjustHeightToContent",
-        "Property to get/set whether to " "automatically adjust the element's height to the element's content.  "
-        "Value is either \"true\" or \"false\".",
-        &Element::setAdjustHeightToContent, &Element::isHeightAdjustedToContent, false
-    );
 }
 
 //----------------------------------------------------------------------------//
-void Element::setArea_impl(const UVector2& pos, const USize& size, bool topLeftSizing, bool fireEvents,
-                           bool adjust_size_to_content)
+void Element::setArea_impl(const UVector2& pos, const USize& size,
+                        bool topLeftSizing, bool fireEvents)
 {
     // we make sure the screen areas are recached when this is called as we need
     // it in most cases
@@ -788,11 +518,11 @@ void Element::setArea_impl(const UVector2& pos, const USize& size, bool topLeftS
         d_area.setPosition(pos);
 
     if (fireEvents)
-        fireAreaChangeEvents(moved, sized, adjust_size_to_content);
+        fireAreaChangeEvents(moved, sized);
 }
 
 //----------------------------------------------------------------------------//
-void Element::fireAreaChangeEvents(const bool moved, const bool sized, bool adjust_size_to_content)
+void Element::fireAreaChangeEvents(const bool moved, const bool sized)
 {
     if (moved)
     {
@@ -803,7 +533,7 @@ void Element::fireAreaChangeEvents(const bool moved, const bool sized, bool adju
     if (sized)
     {
         ElementEventArgs args(this);
-        onSized(args, adjust_size_to_content);
+        onSized(args);
     }
 }
 
@@ -859,7 +589,7 @@ Rectf Element::getUnclippedOuterRect_impl(bool skipAllPixelAlignment) const
 {
     const Sizef pixel_size = skipAllPixelAlignment ?
         calculatePixelSize(true) : getPixelSize();
-    Rectf ret(glm::vec2(0, 0), pixel_size);
+    Rectf ret(Vector2f(0, 0), pixel_size);
 
     const Element* parent = getParentElement();
 
@@ -871,20 +601,20 @@ Rectf Element::getUnclippedOuterRect_impl(bool skipAllPixelAlignment) const
     }
     else
     {
-        parent_rect = Rectf(glm::vec2(0, 0), getRootContainerSize());
+        parent_rect = Rectf(Vector2f(0, 0), getRootContainerSize());
     }
 
     const Sizef parent_size = parent_rect.getSize();
 
-    glm::vec2 offset = glm::vec2(parent_rect.d_min.x, parent_rect.d_min.y) + CoordConverter::asAbsolute(getArea().d_min, parent_size, false);
+    Vector2f offset = parent_rect.d_min + CoordConverter::asAbsolute(getArea().d_min, parent_size, false);
 
     switch (getHorizontalAlignment())
     {
         case HA_CENTRE:
-            offset.x += (parent_size.d_width - pixel_size.d_width) * 0.5f;
+            offset.d_x += (parent_size.d_width - pixel_size.d_width) * 0.5f;
             break;
         case HA_RIGHT:
-            offset.x += parent_size.d_width - pixel_size.d_width;
+            offset.d_x += parent_size.d_width - pixel_size.d_width;
             break;
         default:
             break;
@@ -893,10 +623,10 @@ Rectf Element::getUnclippedOuterRect_impl(bool skipAllPixelAlignment) const
     switch (getVerticalAlignment())
     {
         case VA_CENTRE:
-            offset.y += (parent_size.d_height - pixel_size.d_height) * 0.5f;
+            offset.d_y += (parent_size.d_height - pixel_size.d_height) * 0.5f;
             break;
         case VA_BOTTOM:
-            offset.y += parent_size.d_height - pixel_size.d_height;
+            offset.d_y += parent_size.d_height - pixel_size.d_height;
             break;
         default:
             break;
@@ -904,8 +634,8 @@ Rectf Element::getUnclippedOuterRect_impl(bool skipAllPixelAlignment) const
 
     if (d_pixelAligned && !skipAllPixelAlignment)
     {
-        offset = glm::vec2(CoordConverter::alignToPixels(offset.x),
-                           CoordConverter::alignToPixels(offset.y));
+        offset = Vector2f(CoordConverter::alignToPixels(offset.d_x),
+                          CoordConverter::alignToPixels(offset.d_y));
     }
 
     ret.offset(offset);
@@ -919,16 +649,7 @@ Rectf Element::getUnclippedInnerRect_impl(bool skipAllPixelAlignment) const
 }
 
 //----------------------------------------------------------------------------//
-void Element::onSized(ElementEventArgs& e, bool adjust_size_to_content)
-{
-    onSized_impl(e);
-
-    if (adjust_size_to_content)
-        adjustSizeToContent();
-}
-
-//----------------------------------------------------------------------------//
-void Element::onSized_impl(ElementEventArgs& e)
+void Element::onSized(ElementEventArgs& e)
 {
     notifyScreenAreaChanged(false);
     notifyChildrenOfSizeChange(true, true);

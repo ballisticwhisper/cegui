@@ -32,13 +32,9 @@ namespace CEGUI
 {
 
 namespace XercesParserProperties
-{   
-
-////////////////////////////////////////////////////////////////////////////////
-// SchemaDefaultGroup
-////////////////////////////////////////////////////////////////////////////////
-
+{    
 //----------------------------------------------------------------------------//
+
 String SchemaDefaultResourceGroup::get(const PropertyReceiver* receiver) const
 {
     return static_cast<const XercesParser*>(receiver)->
@@ -55,9 +51,11 @@ void SchemaDefaultResourceGroup::set(PropertyReceiver* receiver,
 //----------------------------------------------------------------------------//
 Property* SchemaDefaultResourceGroup::clone() const
 {
-    return new SchemaDefaultResourceGroup(*this);
+    return CEGUI_NEW_AO SchemaDefaultResourceGroup(*this);
 }
 
+//----------------------------------------------------------------------------//
+//
 } // End of XercesParserProperties namespace section
     
 } // End of  CEGUI namespace section

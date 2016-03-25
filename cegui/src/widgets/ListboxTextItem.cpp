@@ -32,7 +32,6 @@
 #include "CEGUI/Window.h"
 #include "CEGUI/Image.h"
 #include "CEGUI/CoordConverter.h"
-#include "CEGUI/GeometryBuffer.h"
 
 // Start of CEGUI namespace section
 namespace CEGUI
@@ -50,7 +49,7 @@ const Colour	ListboxTextItem::DefaultTextColour		= 0xFFFFFFFF;
 /*************************************************************************
 	Constructor
 *************************************************************************/
-ListboxTextItem::ListboxTextItem(const String& text, unsigned int item_id, void* item_data, bool disabled, bool auto_delete) :
+ListboxTextItem::ListboxTextItem(const String& text, uint item_id, void* item_data, bool disabled, bool auto_delete) :
 	ListboxItem(text, item_id, item_data, disabled, auto_delete),
 	d_textCols(DefaultTextColour, DefaultTextColour, DefaultTextColour, DefaultTextColour),
 	d_font(0),
@@ -125,52 +124,38 @@ Sizef ListboxTextItem::getPixelSize(void) const
     return sz;
 }
 
-std::vector<GeometryBuffer*> ListboxTextItem::createRenderGeometry(
-    const Rectf& targetRect,
-    float alpha, const Rectf* clipper) const
+
+/*************************************************************************
+	Draw the list box item in its current state.
+*************************************************************************/
+void ListboxTextItem::draw(GeometryBuffer& buffer, const Rectf& targetRect,
+                           float alpha, const Rectf* clipper) const
 {
-    std::vector<GeometryBuffer*> geomBuffers;
-
     if (d_selected && d_selectBrush != 0)
-    {
-        ImageRenderSettings imgRenderSettings(
-            targetRect, clipper, true,
-            d_selectCols, alpha);
-
-        std::vector<GeometryBuffer*> brushGeomBuffers =
-            d_selectBrush->createRenderGeometry(imgRenderSettings);
-
-        geomBuffers.insert(geomBuffers.end(), brushGeomBuffers.begin(),
-            brushGeomBuffers.end());
-    }
+        d_selectBrush->render(buffer, targetRect, clipper,
+                            getModulateAlphaColourRect(d_selectCols, alpha));
 
     const Font* font = getFont();
 
     if (!font)
-        return geomBuffers;
+        return;
 
-    glm::vec2 draw_pos(targetRect.getPosition());
+    Vector2f draw_pos(targetRect.getPosition());
 
-    draw_pos.y += CoordConverter::alignToPixels(
+    draw_pos.d_y += CoordConverter::alignToPixels(
         (font->getLineSpacing() - font->getFontHeight()) * 0.5f);
 
     if (!d_renderedStringValid)
         parseTextString();
 
-    const ColourRect final_colours(ColourRect(0xFFFFFFFF));
+    const ColourRect final_colours(
+        getModulateAlphaColourRect(ColourRect(0xFFFFFFFF), alpha));
 
     for (size_t i = 0; i < d_renderedString.getLineCount(); ++i)
     {
-        std::vector<GeometryBuffer*> stringGeomBuffers = d_renderedString.createRenderGeometry(
-            d_owner, i, draw_pos, &final_colours, clipper, 0.0f);
-
-        geomBuffers.insert(geomBuffers.end(), stringGeomBuffers.begin(),
-            stringGeomBuffers.end());
-
-        draw_pos.y += d_renderedString.getPixelSize(d_owner, i).d_height;
+        d_renderedString.draw(d_owner, i, buffer, draw_pos, &final_colours, clipper, 0.0f);
+        draw_pos.d_y += d_renderedString.getPixelSize(d_owner, i).d_height;
     }
-
-    return geomBuffers;
 }
 
 

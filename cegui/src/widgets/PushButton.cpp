@@ -68,44 +68,33 @@ void PushButton::onClicked(WindowEventArgs& e)
 
 
 /*************************************************************************
-	Handler for cursor activation events
+	Handler for mouse button release events
 *************************************************************************/
-void PushButton::onCursorActivate(CursorInputEventArgs& e)
+void PushButton::onMouseButtonUp(MouseEventArgs& e)
 {
-    if ((e.source == CIS_Left) && isPushed())
+	if ((e.button == LeftButton) && isPushed())
 	{
 		Window* sheet = getGUIContext().getRootWindow();
 
 		if (sheet)
 		{
-            // if cursor was released over this widget
-            // (use position from cursor, as e.position has been unprojected)
-            if (this == sheet->getTargetChildAtPosition(
-                getGUIContext().getCursor().getPosition()))
+			// if mouse was released over this widget
+            // (use position from mouse, as e.position has been unprojected)
+			if (this == sheet->getTargetChildAtPosition(
+                getGUIContext().getMouseCursor().getPosition()))
 			{
 				// fire event
 				WindowEventArgs args(this);
 				onClicked(args);
 			}
+
 		}
+
 		++e.handled;
 	}
 
 	// default handling
-    ButtonBase::onCursorActivate(e);
-}
-
-void PushButton::onSemanticInputEvent(SemanticEventArgs& e)
-{
-    if (isDisabled())
-        return;
-
-    if (e.d_semanticValue == SV_Confirm)
-    {
-        onClicked(e);
-
-        ++e.handled;
-    }
+	ButtonBase::onMouseButtonUp(e);
 }
 
 } // End of  CEGUI namespace section

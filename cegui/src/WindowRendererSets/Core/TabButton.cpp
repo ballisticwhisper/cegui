@@ -40,7 +40,7 @@ namespace CEGUI
     {
     }
 
-    void FalagardTabButton::createRenderGeometry()
+    void FalagardTabButton::render()
     {
         TabButton* w = static_cast<TabButton*>(d_window);
         // get WidgetLookFeel for the assigned look.
@@ -58,8 +58,6 @@ namespace CEGUI
             state = "Pushed";
         else if (w->isHovering())
             state = "Hover";
-        else if (w->isFocused())
-            state = "Focused";
         else
             state = "Normal";
 

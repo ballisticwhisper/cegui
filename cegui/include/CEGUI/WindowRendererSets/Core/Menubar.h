@@ -57,8 +57,10 @@ namespace CEGUI
         */
         FalagardMenubar(const String& type);
 
-        void createRenderGeometry() override;
-        Rectf getItemRenderArea(void) const override;
+        // overridden from Menubar base class.
+        void render();
+        //void sizeToContent_impl(void);
+        Rectf getItemRenderArea(void) const;
     };
 
 } // End of  CEGUI namespace section

@@ -27,8 +27,8 @@
 #ifndef _CEGUIRenderedString_h_
 #define _CEGUIRenderedString_h_
 
-#include "CEGUI/Sizef.h"
-#include "CEGUI/Rectf.h"
+#include "CEGUI/Size.h"
+#include "CEGUI/Rect.h"
 #include <vector>
 #include <utility>
 
@@ -47,7 +47,8 @@ namespace CEGUI
     Here 'string' does not refer solely to a text string, rather a string of
     any renderable items.
 */
-class CEGUIEXPORT RenderedString
+class CEGUIEXPORT RenderedString :
+    public AllocatedObject<RenderedString>
 {
 public:
     //! Constructor.
@@ -60,11 +61,12 @@ public:
     \brief
         Draw the string to a GeometryBuffer.
 
-    \param ref_wnd
-        A pointer to a reference Window used to retrieve certain attributes if needed. 
-
     \param line
         The line of the RenderedString to draw.
+
+    \param buffer
+        GeometryBuffer object that is to receive the geometry resulting from the
+        draw operations.
 
     \param position
         Vector2 describing the position where the RenderedString is to be drawn.
@@ -88,17 +90,13 @@ public:
         float value indicating additional padding value to be applied to space
         characters in the string.
 
-    \return
-        Returns the created GeometryBuffer objects needed for rendering this object.
-
     \exception InvalidRequestException
         thrown if \a line is out of range.
     */
-    std::vector<GeometryBuffer*> createRenderGeometry(
-        const Window* ref_wnd,
-        const size_t line,
-        const glm::vec2& position, const ColourRect* mod_colours,
-        const Rectf* clip_rect, const float space_extra) const;
+    void draw(const Window* ref_wnd,
+              const size_t line, GeometryBuffer& buffer,
+              const Vector2f& position, const ColourRect* mod_colours,
+              const Rectf* clip_rect, const float space_extra) const;
 
     /*!
     \brief
@@ -151,14 +149,10 @@ public:
         RenderedString object that will receieve the left portion of the split.
         Any existing content in the RenderedString is replaced.
 
-    \return
-        True if any word was split into 2 or more lines, because it couldn't fit
-        in a single line?
-
     \exception InvalidRequestException
         thrown if \a line is out of range.
     */
-    bool split(const Window* ref_wnd,
+    void split(const Window* ref_wnd,
                const size_t line, float split_point, RenderedString& left);
 
     //! return the total number of spacing characters in the specified line.
@@ -180,13 +174,15 @@ public:
 
 protected:
     //! Collection type used to hold the string components.
-    typedef std::vector<RenderedStringComponent*> ComponentList;
+    typedef std::vector<RenderedStringComponent*
+        CEGUI_VECTOR_ALLOC(RenderedStringComponent*)> ComponentList;
     //! RenderedStringComponent objects that comprise this RenderedString.
     ComponentList d_components;
     //! track info for a line.  first is componetn idx, second is component count.
     typedef std::pair<size_t, size_t> LineInfo;
     //! Collection type used to hold details about the lines.
-    typedef std::vector<LineInfo> LineList;
+    typedef std::vector<LineInfo
+        CEGUI_VECTOR_ALLOC(LineInfo)> LineList;
     //! lines that make up this string.
     LineList d_lines;
     //! Make this object's component list a clone of \a list.

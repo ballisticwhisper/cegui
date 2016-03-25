@@ -31,14 +31,14 @@
 //----------------------------------------------------------------------------//
 CEGUI::ImageCodec* createImageCodec(void)
 {
-    return new CEGUI::STBImageCodec();
+    return CEGUI_NEW_AO CEGUI::STBImageCodec();
 }
 
 //----------------------------------------------------------------------------//
 
 void destroyImageCodec(CEGUI::ImageCodec* imageCodec)
 {
-    delete imageCodec;
+    CEGUI_DELETE_AO imageCodec;
 }
 
 //----------------------------------------------------------------------------//

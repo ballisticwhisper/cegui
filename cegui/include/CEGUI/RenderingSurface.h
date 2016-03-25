@@ -31,8 +31,6 @@
 #include "CEGUI/EventArgs.h"
 #include "CEGUI/RenderQueue.h"
 
-#include <vector>
-
 #if defined(_MSC_VER)
 #   pragma warning(push)
 #   pragma warning(disable : 4251)
@@ -108,7 +106,8 @@ public:
     geometry.
 */
 class CEGUIEXPORT RenderingSurface :
-    public EventSet
+    public EventSet,
+    public AllocatedObject<RenderingSurface>
 {
 public:
     //! Namespace for global events from RenderingSurface objects.
@@ -153,29 +152,6 @@ public:
 
     /*!
     \brief
-        Add the specified GeometryBuffers to the specified queue for rendering
-        when the RenderingSurface is drawn.
-
-    \param queue
-        One of the RenderQueueID enumerated values indicating which prioritised
-        queue the GeometryBuffer should be added to.
-
-    \param geometryBuffers
-        List of GeometryBuffers to be added to the specified rendering queue.
-
-    \note
-        The RenderingSurface does not take ownership of the GeometryBuffers, and
-        does not destroy it when the RenderingSurface geometry is cleared.
-        Rather, the RenderingSurface is just maintaining a list of things to be
-        drawn; the actual GeometryBuffers can be re-used by whichever object
-        does own them, and even changed or updated while still "attached" to
-        a RenderingSurface.
-    */
-    void addGeometryBuffers(const RenderQueueID queue,
-                            const std::vector<GeometryBuffer*>& geometry_buffers);
-
-    /*!
-    \brief
         Add the specified GeometryBuffer to the specified queue for rendering
         when the RenderingSurface is drawn.
 
@@ -183,19 +159,19 @@ public:
         One of the RenderQueueID enumerated values indicating which prioritised
         queue the GeometryBuffer should be added to.
 
-    \param geometry_buffers
-        The GeometryBuffer to be added to the specified rendering queue.
+    \param buffer
+        GeometryBuffer object to be added to the specified rendering queue.
 
     \note
         The RenderingSurface does not take ownership of the GeometryBuffer, and
         does not destroy it when the RenderingSurface geometry is cleared.
-        Rather, the RenderingSurface is just maintaining a list of things to be
+        Rather, the RenderingSurface is just maintaining a list of thigs to be
         drawn; the actual GeometryBuffers can be re-used by whichever object
-        does own them, and even changed or updated while still "attached" to
+        \e does own them, and even changed or updated while still "attached" to
         a RenderingSurface.
     */
     void addGeometryBuffer(const RenderQueueID queue,
-                           const GeometryBuffer& geometry_buffer);
+                           const GeometryBuffer& buffer);
 
     /*!
     \brief
@@ -205,11 +181,11 @@ public:
         One of the RenderQueueID enumerated values indicating which prioritised
         queue the GeometryBuffer should be removed from.
 
-    \param geometry_buffer
+    \param buffer
         GeometryBuffer object to be removed from the specified rendering queue.
     */
     void removeGeometryBuffer(const RenderQueueID queue,
-                              const GeometryBuffer& geometry_buffer);
+                              const GeometryBuffer& buffer);
 
     /*!
     \brief
@@ -369,9 +345,11 @@ protected:
     void attachWindow(RenderingWindow& w);
 
     //! collection type for the queues
-    typedef std::map<RenderQueueID, RenderQueue> RenderQueueList;
+    typedef std::map<RenderQueueID, RenderQueue
+        /*CEGUI_MAP_ALLOC(RenderQueueID, RenderQueue)*/> RenderQueueList;
     //! collection type for created RenderingWindow objects
-    typedef std::vector<RenderingWindow*> RenderingWindowList;
+    typedef std::vector<RenderingWindow*
+        CEGUI_VECTOR_ALLOC(RenderingWindow*)> RenderingWindowList;
     //! the collection of RenderQueue objects.
     RenderQueueList d_queues;
     //! collection of RenderingWindow object we own

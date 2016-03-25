@@ -62,28 +62,21 @@ RenderingSurface::~RenderingSurface()
     // destroy all the RenderingWindow objects attached to this surface
     const size_t count = d_windows.size();
     for (size_t i = 0; i < count; ++i)
-        delete d_windows[i];
-}
-
-//----------------------------------------------------------------------------//
-void RenderingSurface::addGeometryBuffers(const RenderQueueID queue,
-    const std::vector<GeometryBuffer*>& geometry_buffers)
-{
-    d_queues[queue].addGeometryBuffers(geometry_buffers);
+        CEGUI_DELETE_AO d_windows[i];
 }
 
 //----------------------------------------------------------------------------//
 void RenderingSurface::addGeometryBuffer(const RenderQueueID queue,
-     const GeometryBuffer& geometry_buffer)
+    const GeometryBuffer& buffer)
 {
-    d_queues[queue].addGeometryBuffer(geometry_buffer);
+    d_queues[queue].addGeometryBuffer(buffer);
 }
 
 //----------------------------------------------------------------------------//
 void RenderingSurface::removeGeometryBuffer(const RenderQueueID queue,
-    const GeometryBuffer& geometry_buffer)
+    const GeometryBuffer& buffer)
 {
-    d_queues[queue].removeGeometryBuffer(geometry_buffer);
+    d_queues[queue].removeGeometryBuffer(buffer);
 }
 
 //----------------------------------------------------------------------------//
@@ -159,7 +152,7 @@ bool RenderingSurface::isRenderingWindow() const
 //----------------------------------------------------------------------------//
 RenderingWindow& RenderingSurface::createRenderingWindow(TextureTarget& target)
 {
-    RenderingWindow* w = new RenderingWindow(target, *this);
+    RenderingWindow* w = CEGUI_NEW_AO RenderingWindow(target, *this);
     attachWindow(*w);
 
     return *w;
@@ -171,7 +164,7 @@ void RenderingSurface::destroyRenderingWindow(RenderingWindow& window)
     if (&window.getOwner() == this)
     {
         detatchWindow(window);
-        delete &window;
+        CEGUI_DELETE_AO &window;
     }
 }
 

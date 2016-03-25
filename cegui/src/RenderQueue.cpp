@@ -41,22 +41,16 @@ void RenderQueue::draw() const
 }
 
 //----------------------------------------------------------------------------//
-void RenderQueue::addGeometryBuffers(const std::vector<GeometryBuffer*>& geometry_buffers)
+void RenderQueue::addGeometryBuffer(const GeometryBuffer& buffer)
 {
-    d_buffers.insert(d_buffers.end(), geometry_buffers.begin(), geometry_buffers.end());
+    d_buffers.push_back(&buffer);
 }
 
 //----------------------------------------------------------------------------//
-void RenderQueue::addGeometryBuffer(const GeometryBuffer& geometry_buffer)
-{
-    d_buffers.push_back(&geometry_buffer);
-}
-
-//----------------------------------------------------------------------------//
-void RenderQueue::removeGeometryBuffer(const GeometryBuffer& geometry_buffer)
+void RenderQueue::removeGeometryBuffer(const GeometryBuffer& buffer)
 {
     BufferList::iterator i = std::find(d_buffers.begin(), d_buffers.end(),
-                                       &geometry_buffer);
+                                       &buffer);
     if (i != d_buffers.end())
         d_buffers.erase(i);
 }

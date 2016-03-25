@@ -1,7 +1,7 @@
 /***********************************************************************
 	created:	13/4/2004
 	author:		Paul D Turner
-
+	
 	purpose:	Implementation of ButtonBase widget
 *************************************************************************/
 /***************************************************************************
@@ -27,7 +27,7 @@
  *   OTHER DEALINGS IN THE SOFTWARE.
  ***************************************************************************/
 #include "CEGUI/widgets/ButtonBase.h"
-#include "CEGUI/Cursor.h"
+#include "CEGUI/MouseCursor.h"
 
 // Start of CEGUI namespace section
 namespace CEGUI
@@ -55,40 +55,40 @@ ButtonBase::~ButtonBase(void)
 /*************************************************************************
 	Update the internal state of the Widget
 *************************************************************************/
-void ButtonBase::updateInternalState(const glm::vec2& cursor_pos)
+void ButtonBase::updateInternalState(const Vector2f& mouse_pos)
 {
 	const bool oldstate = d_hovering;
 
-    d_hovering = calculateCurrentHoverState(cursor_pos);
+    d_hovering = calculateCurrentHoverState(mouse_pos);
 
 	if (oldstate != d_hovering)
 		invalidate();
 }
 
 //----------------------------------------------------------------------------//
-bool ButtonBase::calculateCurrentHoverState(const glm::vec2& cursor_pos)
+bool ButtonBase::calculateCurrentHoverState(const Vector2f& mouse_pos)
 {
 	if (const Window* capture_wnd = getCaptureWindow())
         return
             (capture_wnd == this ||
-            (capture_wnd->distributesCapturedInputs() && isAncestor(capture_wnd))) && isHit(cursor_pos);
+            (capture_wnd->distributesCapturedInputs() && isAncestor(capture_wnd))) && isHit(mouse_pos);
     else
-	    return getGUIContext().getWindowContainingCursor() == this;
+	    return getGUIContext().getWindowContainingMouse() == this;
 }
 
 /*************************************************************************
-	Handler for when the cursor moves
+	Handler for when the mouse moves
 *************************************************************************/
-void ButtonBase::onCursorMove(CursorInputEventArgs& e)
+void ButtonBase::onMouseMove(MouseEventArgs& e)
 {
-    // this is needed to discover whether cursor is in the widget area or not.
+	// this is needed to discover whether mouse is in the widget area or not.
 	// The same thing used to be done each frame in the rendering method,
 	// but in this version the rendering method may not be called every frame
 	// so we must discover the internal widget state here - which is actually
 	// more efficient anyway.
 
 	// base class processing
-	Window::onCursorMove(e);
+	Window::onMouseMove(e);
 
 	updateInternalState(e.position);
 	++e.handled;
@@ -96,14 +96,14 @@ void ButtonBase::onCursorMove(CursorInputEventArgs& e)
 
 
 /*************************************************************************
-	Handler for cursor press hold events
+	Handler for mouse button pressed events
 *************************************************************************/
-void ButtonBase::onCursorPressHold(CursorInputEventArgs& e)
+void ButtonBase::onMouseButtonDown(MouseEventArgs& e)
 {
 	// default processing
-    Window::onCursorPressHold(e);
+	Window::onMouseButtonDown(e);
 
-    if (e.source == CIS_Left)
+	if (e.button == LeftButton)
 	{
         if (captureInput())
         {
@@ -115,6 +115,7 @@ void ButtonBase::onCursorPressHold(CursorInputEventArgs& e)
 		// event was handled by us.
 		++e.handled;
 	}
+
 }
 
 //----------------------------------------------------------------------------//
@@ -124,7 +125,7 @@ void ButtonBase::setPushedState(const bool pushed)
 
     if (!pushed)
 	    updateInternalState(getUnprojectedPosition(
-            getGUIContext().getCursor().getPosition()));
+            getGUIContext().getMouseCursor().getPosition()));
     else
         d_hovering = true;
 
@@ -132,14 +133,14 @@ void ButtonBase::setPushedState(const bool pushed)
 }
 
 /*************************************************************************
-	Handler for cursor activation events
+	Handler for mouse button release events
 *************************************************************************/
-void ButtonBase::onCursorActivate(CursorInputEventArgs& e)
+void ButtonBase::onMouseButtonUp(MouseEventArgs& e)
 {
 	// default processing
-    Window::onCursorActivate(e);
+	Window::onMouseButtonUp(e);
 
-    if (e.source == CIS_Left)
+	if (e.button == LeftButton)
 	{
 		releaseInput();
 
@@ -150,7 +151,7 @@ void ButtonBase::onCursorActivate(CursorInputEventArgs& e)
 }
 
 /*************************************************************************
-    Handler for when cursor capture is lost
+	Handler for when mouse capture is lost
 *************************************************************************/
 void ButtonBase::onCaptureLost(WindowEventArgs& e)
 {
@@ -158,7 +159,7 @@ void ButtonBase::onCaptureLost(WindowEventArgs& e)
 	Window::onCaptureLost(e);
 
 	d_pushed = false;
-    getGUIContext().updateWindowContainingCursor();
+    getGUIContext().updateWindowContainingMouse();
 	invalidate();
 
 	// event was handled by us.
@@ -167,12 +168,12 @@ void ButtonBase::onCaptureLost(WindowEventArgs& e)
 
 
 /*************************************************************************
-    Handler for when cursor leaves the widget
+	Handler for when mouse leaves the widget
 *************************************************************************/
-void ButtonBase::onCursorLeaves(CursorInputEventArgs& e)
+void ButtonBase::onMouseLeaves(MouseEventArgs& e)
 {
-    // default processing
-    Window::onCursorLeaves(e);
+	// deafult processing
+	Window::onMouseLeaves(e);
 
 	d_hovering = false;
 	invalidate();

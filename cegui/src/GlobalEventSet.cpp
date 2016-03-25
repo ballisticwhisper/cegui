@@ -26,7 +26,6 @@
  ***************************************************************************/
 #include "CEGUI/GlobalEventSet.h"
 #include "CEGUI/Logger.h"
-#include "CEGUI/SharedStringStream.h"
 
 
 // Start of CEGUI namespace section
@@ -43,10 +42,10 @@ namespace CEGUI
 	*************************************************************************/
 	GlobalEventSet::GlobalEventSet()
 	{
-        String addressStr = SharedStringstream::GetPointerAddressAsString(this);
-
+        char addr_buff[32];
+        sprintf(addr_buff, "(%p)", static_cast<void*>(this));
 		Logger::getSingleton().logEvent(
-          "CEGUI::GlobalEventSet Singleton created. (" + addressStr + ")");
+          "CEGUI::GlobalEventSet singleton created. " + String(addr_buff));
 	}
 
 	/*************************************************************************
@@ -54,10 +53,10 @@ namespace CEGUI
 	*************************************************************************/
 	GlobalEventSet::~GlobalEventSet()
 	{
-        String addressStr = SharedStringstream::GetPointerAddressAsString(this);
-
+        char addr_buff[32];
+        sprintf(addr_buff, "(%p)", static_cast<void*>(this));
 		Logger::getSingleton().logEvent(
-          "CEGUI::GlobalEventSet singleton destroyed. (" + addressStr + ")");
+          "CEGUI::GlobalEventSet singleton destroyed. " + String(addr_buff));
 	}
 
 	/*************************************************************************

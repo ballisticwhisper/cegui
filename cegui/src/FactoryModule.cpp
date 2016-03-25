@@ -48,18 +48,18 @@ void FactoryModule::registerFactory(const String& type_name)
         }
     }
 
-    throw UnknownObjectException("No factory for type '" +
-        type_name + "' in this module.");
+    CEGUI_THROW(UnknownObjectException("No factory for type '" +
+        type_name + "' in this module."));
 }
 
 //----------------------------------------------------------------------------//
-unsigned int FactoryModule::registerAllFactories()
+uint FactoryModule::registerAllFactories()
 {
     FactoryRegistry::iterator i = d_registry.begin();
     for ( ; i != d_registry.end(); ++i)
         (*i)->registerFactory();
 
-    return static_cast<unsigned int>(d_registry.size());
+    return static_cast<uint>(d_registry.size());
 }
 
 //----------------------------------------------------------------------------//
@@ -78,13 +78,13 @@ void FactoryModule::unregisterFactory(const String& type_name)
 }
 
 //----------------------------------------------------------------------------//
-unsigned int FactoryModule::unregisterAllFactories()
+uint FactoryModule::unregisterAllFactories()
 {
     FactoryRegistry::iterator i = d_registry.begin();
     for ( ; i != d_registry.end(); ++i)
         (*i)->unregisterFactory();
 
-    return static_cast<unsigned int>(d_registry.size());
+    return static_cast<uint>(d_registry.size());
 }
 
 //----------------------------------------------------------------------------//

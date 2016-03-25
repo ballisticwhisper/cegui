@@ -346,10 +346,8 @@ namespace CEGUI
         void updateFormatting(const Window& srcWindow, const Sizef& size) const;
 
     protected:
-        void addImageRenderGeometryToWindow_impl(Window& srcWindow, Rectf& destRect,
-            const CEGUI::ColourRect* modColours, const Rectf* clipper,
-            bool clipToDisplay) const override;
-
+        // implemets abstract from base
+        void render_impl(Window& srcWindow, Rectf& destRect, const CEGUI::ColourRect* modColours, const Rectf* clipper, bool clipToDisplay) const;
         //! helper to set up an appropriate FormattedRenderedString
         void setupStringFormatter(const Window& window,
                                   const RenderedString& rendered_string) const;

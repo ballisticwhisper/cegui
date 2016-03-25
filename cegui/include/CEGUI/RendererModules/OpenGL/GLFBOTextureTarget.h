@@ -28,7 +28,7 @@
 #define _CEGUIOpenGLFBOTextureTarget_h_
 
 #include "CEGUI/RendererModules/OpenGL/TextureTarget.h"
-#include "../../Rectf.h"
+#include "../../Rect.h"
 #include "CEGUI/RendererModules/OpenGL/GL.h"
 
 #if defined(_MSC_VER)
@@ -45,7 +45,7 @@ class OpenGLTexture;
 class OPENGL_GUIRENDERER_API OpenGLFBOTextureTarget : public OpenGLTextureTarget
 {
 public:
-    OpenGLFBOTextureTarget(OpenGLRendererBase& owner, bool addStencilBuffer);
+    OpenGLFBOTextureTarget(OpenGLRendererBase& owner);
     virtual ~OpenGLFBOTextureTarget();
 
     // overrides from OpenGLRenderTarget

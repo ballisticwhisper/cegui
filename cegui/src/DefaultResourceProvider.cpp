@@ -34,9 +34,6 @@
 #   include <io.h>
 #   include <windows.h>
 #   include <string>
-#elif defined(__ANDROID__)
-#   include "CEGUI/AndroidUtils.h" 
-#   include <android/asset_manager.h>
 #else
 #   include <sys/types.h>
 #   include <sys/stat.h>
@@ -54,59 +51,35 @@ void DefaultResourceProvider::loadRawDataContainer(const String& filename,
                                                    const String& resourceGroup)
 {
     if (filename.empty())
-        throw InvalidRequestException(
-            "Filename supplied for data loading must be valid");
+        CEGUI_THROW(InvalidRequestException(
+            "Filename supplied for data loading must be valid"));
 
     const String final_filename(getFinalFilename(filename, resourceGroup));
 
-#ifdef __ANDROID__
-    if (AndroidUtils::getAndroidApp() == 0)
-        throw FileIOException("AndroidUtils::android_app has not been set for CEGUI");
-    struct android_app* app = AndroidUtils::getAndroidApp();
-    if (!app->activity->assetManager)
-        throw FileIOException("Android AAssetManager is not valid ");
-    //AAsset *file = AAssetManager_open(app->activity->assetManager, final_filename.c_str(), AASSET_MODE_BUFFER);
-    AAsset *file = AAssetManager_open(app->activity->assetManager, final_filename.c_str(), AASSET_MODE_UNKNOWN);
-    
-    if (file == 0)
-        throw FileIOException(final_filename + " does not exist");
-
-    size_t size = AAsset_getLength(file);
-
-    unsigned char* const buffer = new unsigned char[size];
-
-    const size_t size_read = AAsset_read(file, buffer, size);
-    AAsset_close(file);
-#else
-#   if defined(__WIN32__) || defined(_WIN32)
+#if defined(__WIN32__) || defined(_WIN32)
     FILE* file = _wfopen(System::getStringTranscoder().stringToStdWString(final_filename).c_str(), L"rb");
-#   else
-#       if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32
-        FILE* file = fopen(final_filename.toUtf8String().c_str(), "rb");
-#       else
-        FILE* file = fopen(final_filename.c_str(), "rb");
-#       endif
-#   endif
-    
+#else
+    FILE* file = fopen(final_filename.c_str(), "rb");
+#endif
+
     if (file == 0)
-        throw FileIOException(final_filename + " does not exist");
-    
+        CEGUI_THROW(FileIOException(final_filename + " does not exist"));
+
     fseek(file, 0, SEEK_END);
     const size_t size = ftell(file);
     fseek(file, 0, SEEK_SET);
 
-    unsigned char* const buffer = new unsigned char[size];
+    unsigned char* const buffer = CEGUI_NEW_ARRAY_PT(unsigned char, size, RawDataContainer);
 
     const size_t size_read = fread(buffer, sizeof(char), size, file);
     fclose(file);
-#endif
 
     if (size_read != size)
     {
-        delete[] buffer;
+        CEGUI_DELETE_ARRAY_PT(buffer, unsigned char, size, BufferAllocator);
 
-        throw FileIOException(
-            "A problem occurred while reading file: " + final_filename);
+        CEGUI_THROW(FileIOException(
+            "A problem occurred while reading file: " + final_filename));
     }
 
     output.setData(buffer);
@@ -211,40 +184,19 @@ size_t DefaultResourceProvider::getResourceGroupFileNames(
             if ((fd.attrib & _A_SUBDIR))
                 continue;
 
-            CEGUI::String currentName = System::getStringTranscoder().stringFromStdWString(fd.name);
-            out_vec.push_back(currentName);
+            out_vec.push_back(System::getStringTranscoder().stringFromStdWString(fd.name));
             ++entries;
         }
         while (_wfindnext(f, &fd) == 0);
 
         _findclose(f);
     }
-#elif defined(__ANDROID__)
-    if (AndroidUtils::getAndroidApp() == 0)
-        throw FileIOException("AndroidUtils::android_app has not been set for CEGUI");
-    struct android_app* app = AndroidUtils::getAndroidApp();
-    AAssetDir* dirp;
-    if ((dirp == AAssetManager_openDir(app->activity->assetManager, dir_name.c_str()))) 
-    {
-        const char* filename;
-        while ((filename =  AAssetDir_getNextFileName(dirp)))
-        {
-            out_vec.push_back(filename);
-            ++entries;
-        }
-        AAssetDir_close(dirp);
-    }
+
 // Everybody else
 #else
     DIR* dirp;
 
-#if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32
-    dirp = opendir(dir_name.toUtf8String().c_str());
-#else
-    dirp = opendir(dir_name.c_str());
-#endif
-
-    if (dirp)
+    if ((dirp = opendir(dir_name.c_str())))
     {
         struct dirent* dp;
 
@@ -253,15 +205,9 @@ size_t DefaultResourceProvider::getResourceGroupFileNames(
             const String filename(dir_name + dp->d_name);
             struct stat s;
 
-#if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32
-            if ((stat(filename.toUtf8String().c_str(), &s) == 0) &&
-                    S_ISREG(s.st_mode) &&
-                    (fnmatch(file_pattern.toUtf8String().c_str(), dp->d_name, 0) == 0))
-#else
             if ((stat(filename.c_str(), &s) == 0) &&
                     S_ISREG(s.st_mode) &&
                     (fnmatch(file_pattern.c_str(), dp->d_name, 0) == 0))
-#endif
             {
                 out_vec.push_back(dp->d_name);
                 ++entries;

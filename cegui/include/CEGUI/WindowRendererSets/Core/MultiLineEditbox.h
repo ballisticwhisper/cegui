@@ -45,11 +45,9 @@ namespace CEGUI
     This class requires LookNFeel to be assigned.  The LookNFeel should provide the following:
 
     States:
-        - Enabled           - Rendering for when the editbox is in enabled and is in read-write mode.
-        - EnabledFocused    - Rendering for when the editbox is focused and is in read-write mode.
-        - ReadOnly          - Rendering for when the editbox is in enabled and is in read-only mode.
-        - ReadOnlyFocused   - Rendering for when the editbox is focused and is in read-only mode.
-        - Disabled          - Rendering for when the editbox is disabled.
+        - Enabled    - Rendering for when the editbox is in enabled and is in read-write mode.
+        - ReadOnly  - Rendering for when the editbox is in enabled and is in read-only mode.
+        - Disabled  - Rendering for when the editbox is disabled.
 
     NamedAreas:
         TextArea         - area where text, selection, and caret imagery will appear.
@@ -93,9 +91,10 @@ public:
     */
     FalagardMultiLineEditbox(const String& type);
 
-    Rectf getTextRenderArea(void) const override;
-    void createRenderGeometry() override;
-    void update(float elapsed) override;
+    // overridden from base classes.
+    Rectf getTextRenderArea(void) const;
+    void render();
+    void update(float elapsed);
 
     //! return whether the blinking caret is enabled.
     bool isCaretBlinkEnabled() const;

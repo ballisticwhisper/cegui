@@ -29,7 +29,7 @@
 
 #include "CEGUI/RendererModules/OpenGL/TextureTarget.h"
 #include "CEGUI/RendererModules/OpenGL/GL.h"
-#include "../../Rectf.h"
+#include "../../Rect.h"
 
 
 #if defined(_MSC_VER)
@@ -42,13 +42,12 @@ namespace CEGUI
 {
 class OpenGL3Texture;
 class OpenGL3Renderer;
-class OpenGLBaseStateChangeWrapper;
 
 //! ~OpenGL3FBOTextureTarget - allows rendering to an OpenGL texture via FBO.
 class OPENGL_GUIRENDERER_API OpenGL3FBOTextureTarget : public OpenGLTextureTarget
 {
 public:
-    OpenGL3FBOTextureTarget(OpenGL3Renderer& owner, bool addStencilBuffer);
+    OpenGL3FBOTextureTarget(OpenGL3Renderer& owner);
     virtual ~OpenGL3FBOTextureTarget();
 
     // overrides from OpenGL3RenderTarget
@@ -74,12 +73,8 @@ protected:
 
     //! Frame buffer object.
     GLuint d_frameBuffer;
-    //! Stencil buffer renderbuffer object
-    GLuint d_stencilBufferRBO;
     //! Frame buffer object that was bound before we bound this one
     GLuint d_previousFrameBuffer;
-    //! OpenGL state changer
-    OpenGLBaseStateChangeWrapper* d_glStateChanger;
 };
 
 } // End of  CEGUI namespace section

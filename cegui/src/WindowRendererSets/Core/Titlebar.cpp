@@ -39,11 +39,11 @@ namespace CEGUI
     {
     }
 
-    void FalagardTitlebar::createRenderGeometry()
+    void FalagardTitlebar::render()
     {
         const StateImagery* imagery;
 
-        try
+        CEGUI_TRY
         {
             // get WidgetLookFeel for the assigned look.
             const WidgetLookFeel& wlf = getLookNFeel();
@@ -53,7 +53,7 @@ namespace CEGUI
             else
                 imagery = &wlf.getStateImagery("Disabled");
         }
-        catch (UnknownObjectException&)
+        CEGUI_CATCH (UnknownObjectException&)
         {
             // log error so we know imagery is missing, and then quit.
             return;

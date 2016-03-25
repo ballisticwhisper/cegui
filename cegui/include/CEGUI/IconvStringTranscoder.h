@@ -39,10 +39,11 @@ public:
     IconvStringTranscoder();
 
     // implement abstract interface
-    char16_t* stringToUTF16(const String& input) const;
+    uint16* stringToUTF16(const String& input) const;
     std::wstring stringToStdWString(const String& input) const;
-    String stringFromUTF16(const char16_t* input) const;
+    String stringFromUTF16(const uint16* input) const;
     String stringFromStdWString(const std::wstring& input) const;
+    void deleteUTF16Buffer(uint16* input) const;
 
 private:
     const char* UTF16PE;

@@ -38,7 +38,7 @@ namespace CEGUI
     object pointer.
 */
 template<typename T>
-class FunctorPointerSlot : public SlotFunctorBase<EventArgs>
+class FunctorPointerSlot : public SlotFunctorBase
 {
 public:
     FunctorPointerSlot(T* functor) :

@@ -43,12 +43,12 @@ BOOST_AUTO_TEST_CASE(InternalClipboard)
     BOOST_CHECK_EQUAL(cb.getText(), "TestingContents");
 
     // raw data set, get
-    std::uint8_t* buffer = new std::uint8_t[BUFFER_SIZE];
+    CEGUI::uint8* buffer = new CEGUI::uint8[BUFFER_SIZE];
     for (unsigned int i = 0; i < BUFFER_SIZE; ++i)
     {
         // I want to have something in the memory, not just zeroes,
         // this could avoid false positives in some cases
-        buffer[i] = static_cast<std::uint8_t>(i % std::numeric_limits<std::uint8_t>::max());
+        buffer[i] = static_cast<CEGUI::uint8>(i % std::numeric_limits<CEGUI::uint8>::max());
     }
 
     cb.setData(MIME_TYPE, buffer, BUFFER_SIZE);
@@ -62,34 +62,26 @@ BOOST_AUTO_TEST_CASE(InternalClipboard)
     BOOST_CHECK_EQUAL(MIME_TYPE, retrievedMimeType);
     BOOST_CHECK_EQUAL(BUFFER_SIZE, retrievedBufferSize);
     BOOST_CHECK(memcmp(buffer, retrievedBuffer, BUFFER_SIZE) == 0); // 0 indicates that both blocks of memory are equal
-    delete[] buffer;
 }
 
 static CEGUI::String g_MimeType = "";
-static std::uint8_t* g_ClipboardBuffer = 0;
+static CEGUI::uint8* g_ClipboardBuffer = 0;
 static size_t g_ClipboardSize = 0;
 
 class TestNativeClipboardProvider : public CEGUI::NativeClipboardProvider
 {
-private:
-    std::vector<void*> d_allocatedMemory;
 public:
     virtual ~TestNativeClipboardProvider()
-    {
-        for (std::vector<void*>::iterator itor = d_allocatedMemory.begin();
-            itor != d_allocatedMemory.end(); ++itor)
-        {
-            delete[] *itor;
-        }
-    }
+    {}
 
     virtual void sendToClipboard(const CEGUI::String& mimeType, void* buffer, size_t size)
     {
+        delete g_ClipboardBuffer;
+
         g_MimeType = mimeType;
         g_ClipboardSize = size;
-        g_ClipboardBuffer = new std::uint8_t[size];
+        g_ClipboardBuffer = new CEGUI::uint8[size];
         memcpy(g_ClipboardBuffer, buffer, size);
-        d_allocatedMemory.push_back(g_ClipboardBuffer);
     }
 
     virtual void retrieveFromClipboard(CEGUI::String& mimeType, void*& buffer, size_t& size)
@@ -98,9 +90,8 @@ public:
         size = g_ClipboardSize;
 
         // we have to allocate buffer for the user of the native clipboard provider!
-        buffer = new std::uint8_t[g_ClipboardSize];
+        buffer = new CEGUI::uint8[g_ClipboardSize];
         memcpy(buffer, g_ClipboardBuffer, g_ClipboardSize);
-        d_allocatedMemory.push_back(buffer);
     }
 };
 
@@ -119,7 +110,7 @@ BOOST_AUTO_TEST_CASE(NativeClipboardProvider)
 
 #if CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UNICODE
     // Unicode string set, get
-    const char* utf8Test = "(・。・;)";
+    const CEGUI::utf8* utf8Test = (const CEGUI::utf8*)"(・。・;)";
     cb.setText(utf8Test);
     BOOST_CHECK_EQUAL(cb.getText(), utf8Test);
     BOOST_CHECK(memcmp(g_ClipboardBuffer, CEGUI::String(utf8Test).c_str(), g_ClipboardSize) == 0);

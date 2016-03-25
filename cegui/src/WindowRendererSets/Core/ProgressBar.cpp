@@ -53,7 +53,7 @@ namespace CEGUI
         false);
     }
 
-    void FalagardProgressBar::createRenderGeometry()
+    void FalagardProgressBar::render()
     {
         const StateImagery* imagery;
 

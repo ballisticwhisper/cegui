@@ -27,80 +27,27 @@
 #ifndef _CEGUIVertex_h_
 #define _CEGUIVertex_h_
 
+#include "CEGUI/Vector.h"
 #include "CEGUI/Colour.h"
 
-#include <glm/glm.hpp>
-
-#if defined(_MSC_VER)
-#	pragma warning(push)
-#	pragma warning(disable : 4251)
-#endif
-
-
+// Start of CEGUI namespace section
 namespace CEGUI
 {
 /*!
 \brief
-    Structure that is used to hold the attributes of a vertex for coloured and
-    textured geometry in 3D space.
+    structure that is used to hold details of a single vertex in 3D space.
 */
-struct CEGUIEXPORT TexturedColouredVertex
+struct Vertex :
+    public AllocatedObject<Vertex>
 {
-    //! Constructor
-    TexturedColouredVertex()
-    {}
-
-    TexturedColouredVertex(const glm::vec3& position,
-                           const glm::vec4& colour,
-                           const glm::vec2& texCoords) :
-        d_position(position),
-        d_colour(colour),
-        d_texCoords(texCoords)
-    {}
-
-    //! Sets the colour of the struct
-    void setColour(const Colour& colour);
-
     //! Position of the vertex in 3D space.
-    glm::vec3   d_position;
-    //! Multiplicative-colour attribute of the vertex.
-    glm::vec4   d_colour;
-    //! Texture coordinates of the vertex.
-    glm::vec2   d_texCoords;
+    Vector3f position;
+    //! Texture co-ords to be applied to the vertex.
+    Vector2f tex_coords;
+    //! colour to be applied to the vertex.
+    Colour  colour_val;
 };
 
-/*!
-\brief
-    Structure that is used to hold the attributes of coloured geometry
-    in 3D space.
-*/
-struct CEGUIEXPORT ColouredVertex
-{
-    //! Constructor
-    ColouredVertex()
-    {}
-
-    ColouredVertex(const glm::vec3& position,
-                   const glm::vec4& colour) :
-        d_position(position),
-        d_colour(colour)
-    {}
-
-    //! Sets the colour of the struct
-    void setColour(const Colour& colour);
-
-    //! Position of the vertex in 3D space.
-    glm::vec3   d_position;
-
-    //! Colour attribute of the vertex.
-    glm::vec4   d_colour;
-};
-
-
-}
-
-#if defined(_MSC_VER)
-#	pragma warning(pop)
-#endif
+} // End of  CEGUI namespace section
 
 #endif  // end of guard _CEGUIVertex_h_

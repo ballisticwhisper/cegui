@@ -70,7 +70,8 @@ enum LoggingLevel
     a object of that type before you create the CEGUI::System singleton.
 */
 class CEGUIEXPORT Logger :
-    public Singleton<Logger>
+    public Singleton<Logger>,
+    public AllocatedObject<Logger>
 {
 public:
 	/*!

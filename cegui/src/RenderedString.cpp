@@ -92,13 +92,13 @@ void RenderedString::cloneComponentList(const ComponentList& list)
 void RenderedString::clearComponentList(ComponentList& list)
 {
     for (size_t i = 0; i < list.size(); ++i)
-        delete list[i];
+        CEGUI_DELETE_AO list[i];
 
     list.clear();
 }
 
 //----------------------------------------------------------------------------//
-bool RenderedString::split(const Window* ref_wnd, const size_t line,
+void RenderedString::split(const Window* ref_wnd, const size_t line,
                            float split_point, RenderedString& left)
 {
     // FIXME: This function is big and nasty; it breaks all the rules for a
@@ -106,130 +106,123 @@ bool RenderedString::split(const Window* ref_wnd, const size_t line,
     // On the plus side, it does seem to work though ;)
 
     if (line >= getLineCount())
-        throw InvalidRequestException(
-            "line number specified is invalid.");
-
-    bool was_word_split(false);
+        CEGUI_THROW(InvalidRequestException(
+            "line number specified is invalid."));
 
     left.clearComponents();
 
-    if (!d_components.empty())
+    if (d_components.empty())
+        return;
+
+    // move all components in lines prior to the line being split to the left
+    if (line > 0)
     {
+        // calculate size of range
+        const size_t sz = d_lines[line - 1].first + d_lines[line - 1].second;
+        // range start
+        ComponentList::iterator cb = d_components.begin();
+        // range end (exclusive)
+        ComponentList::iterator ce = cb + sz;
+        // copy components to left side
+        left.d_components.assign(cb, ce);
+        // erase components from this side.
+        d_components.erase(cb, ce);
 
-        // move all components in lines prior to the line being split to the left
-        if (line > 0)
-        {
-            // calculate size of range
-            const size_t sz = d_lines[line - 1].first + d_lines[line - 1].second;
-            // range start
-            ComponentList::iterator cb = d_components.begin();
-            // range end (exclusive)
-            ComponentList::iterator ce = cb + sz;
-            // copy components to left side
-            left.d_components.assign(cb, ce);
-            // erase components from this side.
-            d_components.erase(cb, ce);
-
-            LineList::iterator lb = d_lines.begin();
-            LineList::iterator le = lb + line;
-            // copy lines to left side
-            left.d_lines.assign(lb, le);
-            // erase lines from this side
-            d_lines.erase(lb, le);
-        }
-
-        // find the component where the requested split point lies.
-        float partial_extent = 0;
-
-        size_t idx = 0;
-        const size_t last_component = d_lines[0].second;
-        for (; idx < last_component; ++idx)
-        {
-            partial_extent += d_components[idx]->getPixelSize(ref_wnd).d_width;
-
-            if (split_point <= partial_extent)
-                break;
-        }
-
-        // case where split point is past the end
-        if (idx >= last_component)
-        {
-            // transfer this line's components to the 'left' string.
-            //
-            // calculate size of range
-            const size_t sz = d_lines[0].second;
-            // range start
-            ComponentList::iterator cb = d_components.begin();
-            // range end (exclusive)
-            ComponentList::iterator ce = cb + sz;
-            // copy components to left side
-            left.d_components.insert(left.d_components.end(), cb, ce);
-            // erase components from this side.
-            d_components.erase(cb, ce);
-
-            // copy line info to left side
-            left.d_lines.push_back(d_lines[0]);
-            // erase line from this side
-            d_lines.erase(d_lines.begin());
-
-            // fix up lines in this object
-            for (size_t comp = 0, i = 0; i < d_lines.size(); ++i)
-            {
-                d_lines[i].first = comp;
-                comp += d_lines[i].second;
-            }
-        }
-        else
-        {
-
-            left.appendLineBreak();
-            const size_t left_line = left.getLineCount() - 1;
-            // Everything up to 'idx' is xfered to 'left'
-            for (size_t i = 0; i < idx; ++i)
-            {
-                left.d_components.push_back(d_components[0]);
-                d_components.erase(d_components.begin());
-                ++left.d_lines[left_line].second;
-                --d_lines[0].second;
-            }
-
-            // now to split item 'idx' putting half in left and leaving half in this.
-            RenderedStringComponent* c = d_components[0];
-            if (c->canSplit())
-            {
-                RenderedStringComponent* lc = 
-                    c->split(ref_wnd,
-                             split_point - (partial_extent - c->getPixelSize(ref_wnd).d_width),
-                             idx == 0,
-                             was_word_split);
-
-                if (lc)
-                {
-                    left.d_components.push_back(lc);
-                    ++left.d_lines[left_line].second;
-                }
-            }
-            // can't split, if component width is >= split_point xfer the whole
-            // component to it's own line in the left part (FIX #306)
-            else if (c->getPixelSize(ref_wnd).d_width >= split_point)
-            {
-                left.appendLineBreak();
-                left.d_components.push_back(d_components[0]);
-                d_components.erase(d_components.begin());
-                ++left.d_lines[left_line + 1].second;
-                --d_lines[0].second;
-            }
-
-            // fix up lines in this object
-            for (size_t comp = 0, i = 0; i < d_lines.size(); ++i)
-            {
-                d_lines[i].first = comp;
-                comp += d_lines[i].second;
-            }
-        }
+        LineList::iterator lb = d_lines.begin();
+        LineList::iterator le = lb + line;
+        // copy lines to left side
+        left.d_lines.assign(lb, le);
+        // erase lines from this side
+        d_lines.erase(lb, le);
     }
 
-    return was_word_split;
+    // find the component where the requested split point lies.
+    float partial_extent = 0;
+
+    size_t idx = 0;
+    const size_t last_component = d_lines[0].second;
+    for (; idx < last_component; ++idx)
+    {
+        partial_extent += d_components[idx]->getPixelSize(ref_wnd).d_width;
+
+        if (split_point <= partial_extent)
+            break;
+    }
+
+    // case where split point is past the end
+    if (idx >= last_component)
+    {
+        // transfer this line's components to the 'left' string.
+        //
+        // calculate size of range
+        const size_t sz = d_lines[0].second;
+        // range start
+        ComponentList::iterator cb = d_components.begin();
+        // range end (exclusive)
+        ComponentList::iterator ce = cb + sz;
+        // copy components to left side
+        left.d_components.insert(left.d_components.end(), cb, ce);
+        // erase components from this side.
+        d_components.erase(cb, ce);
+
+        // copy line info to left side
+        left.d_lines.push_back(d_lines[0]);
+        // erase line from this side
+        d_lines.erase(d_lines.begin());
+
+        // fix up lines in this object
+        for (size_t comp = 0, i = 0; i < d_lines.size(); ++i)
+        {
+            d_lines[i].first = comp;
+            comp += d_lines[i].second;
+        }
+
+        return;
+    }
+
+    left.appendLineBreak();
+    const size_t left_line = left.getLineCount() - 1;
+    // Everything up to 'idx' is xfered to 'left'
+    for (size_t i = 0; i < idx; ++i)
+    {
+        left.d_components.push_back(d_components[0]);
+        d_components.erase(d_components.begin());
+        ++left.d_lines[left_line].second;
+        --d_lines[0].second;
+    }
+
+    // now to split item 'idx' putting half in left and leaving half in this.
+    RenderedStringComponent* c = d_components[0];
+    if (c->canSplit())
+    {
+        RenderedStringComponent* lc = 
+            c->split(ref_wnd,
+                     split_point - (partial_extent - c->getPixelSize(ref_wnd).d_width),
+                     idx == 0);
+
+        if (lc)
+        {
+            left.d_components.push_back(lc);
+            ++left.d_lines[left_line].second;
+        }
+    }
+    // can't split, if component width is >= split_point xfer the whole
+    // component to it's own line in the left part (FIX #306)
+    else if (c->getPixelSize(ref_wnd).d_width >= split_point)
+    {
+        left.appendLineBreak();
+        left.d_components.push_back(d_components[0]);
+        d_components.erase(d_components.begin());
+        ++left.d_lines[left_line + 1].second;
+        --d_lines[0].second;
+    }
+
+    // fix up lines in this object
+    for (size_t comp = 0, i = 0; i < d_lines.size(); ++i)
+    {
+        d_lines[i].first = comp;
+        comp += d_lines[i].second;
+    }
 }
 
 //----------------------------------------------------------------------------//
@@ -252,8 +245,8 @@ Sizef RenderedString::getPixelSize(const Window* ref_wnd,
                                    const size_t line) const
 {
     if (line >= getLineCount())
-        throw InvalidRequestException(
-            "line number specified is invalid.");
+        CEGUI_THROW(InvalidRequestException(
+            "line number specified is invalid."));
 
     Sizef sz(0, 0);
 
@@ -274,8 +267,8 @@ Sizef RenderedString::getPixelSize(const Window* ref_wnd,
 size_t RenderedString::getSpaceCount(const size_t line) const
 {
     if (line >= getLineCount())
-        throw InvalidRequestException(
-            "line number specified is invalid.");
+        CEGUI_THROW(InvalidRequestException(
+            "line number specified is invalid."));
 
     size_t space_count = 0;
 
@@ -287,35 +280,26 @@ size_t RenderedString::getSpaceCount(const size_t line) const
 }
 
 //----------------------------------------------------------------------------//
-std::vector<GeometryBuffer*> RenderedString::createRenderGeometry(
-    const Window* ref_wnd, const size_t line,
-    const glm::vec2& position,
-    const ColourRect* mod_colours, const Rectf* clip_rect,
-    const float space_extra) const
+void RenderedString::draw(const Window* ref_wnd, const size_t line,
+                          GeometryBuffer& buffer, const Vector2f& position,
+                          const ColourRect* mod_colours, const Rectf* clip_rect,
+                          const float space_extra) const
 {
     if (line >= getLineCount())
-        throw InvalidRequestException(
-            "line number specified is invalid.");
+        CEGUI_THROW(InvalidRequestException(
+            "line number specified is invalid."));
 
     const float render_height = getPixelSize(ref_wnd, line).d_height;
 
-    glm::vec2 comp_pos(position);
-    std::vector<GeometryBuffer*> geomBuffers;
+    Vector2f comp_pos(position);
 
     const size_t end_component = d_lines[line].first + d_lines[line].second;
     for (size_t i = d_lines[line].first; i < end_component; ++i)
     {
-        std::vector<GeometryBuffer*> currentRenderGeometry =
-            d_components[i]->createRenderGeometry(ref_wnd, comp_pos, mod_colours, clip_rect,
-                render_height, space_extra);
-
-        geomBuffers.insert(geomBuffers.end(), currentRenderGeometry.begin(),
-            currentRenderGeometry.end());
-
-        comp_pos.x += d_components[i]->getPixelSize(ref_wnd).d_width;
+        d_components[i]->draw(ref_wnd, buffer, comp_pos, mod_colours, clip_rect,
+                              render_height, space_extra);
+        comp_pos.d_x += d_components[i]->getPixelSize(ref_wnd).d_width;
     }
-
-    return geomBuffers;
 }
 
 //----------------------------------------------------------------------------//

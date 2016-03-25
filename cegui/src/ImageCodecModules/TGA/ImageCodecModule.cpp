@@ -32,10 +32,10 @@
 
 CEGUI::ImageCodec* createImageCodec(void)
 {
-    return new CEGUI::TGAImageCodec();
+    return CEGUI_NEW_AO CEGUI::TGAImageCodec();
 }
 
 void destroyImageCodec(CEGUI::ImageCodec* imageCodec)
 {
-    delete imageCodec;
+    CEGUI_DELETE_AO imageCodec;
 }

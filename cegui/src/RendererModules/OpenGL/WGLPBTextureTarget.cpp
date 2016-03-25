@@ -55,8 +55,8 @@ int pbAttrs[] =
 };
 
 //----------------------------------------------------------------------------//
-OpenGLWGLPBTextureTarget::OpenGLWGLPBTextureTarget(OpenGLRendererBase& owner, bool addStencilBuffer) :
-    OpenGLTextureTarget(owner, addStencilBuffer),
+OpenGLWGLPBTextureTarget::OpenGLWGLPBTextureTarget(OpenGLRendererBase& owner) :
+    OpenGLTextureTarget(owner),
     d_pixfmt(0),
     d_pbuffer(0),
     d_context(0),
@@ -65,17 +65,17 @@ OpenGLWGLPBTextureTarget::OpenGLWGLPBTextureTarget(OpenGLRendererBase& owner, bo
     d_prevDC(0)
 {
     if (!WGLEW_ARB_pbuffer)
-        throw RendererException("WGL_ARB_pbuffer extension is needed to "
-            "use OpenGLWGLPBTextureTarget!");
+        CEGUI_THROW(RendererException("WGL_ARB_pbuffer extension is needed to "
+            "use OpenGLWGLPBTextureTarget!"));
 
     HDC hdc = wglGetCurrentDC();
 
-    unsigned int fmtcnt;
+    uint fmtcnt;
     wglChoosePixelFormatARB(hdc, pbAttrs, 0, 1, &d_pixfmt, &fmtcnt);
 
     if (!fmtcnt)
-        throw RendererException(
-            "pbuff creation failure, no suitable pixel formats.");
+        CEGUI_THROW(RendererException(
+            "pbuff creation failure, no suitable pixel formats."));
 
     initialiseTexture();
 
@@ -117,7 +117,7 @@ void OpenGLWGLPBTextureTarget::deactivate()
 {
     // grab what we rendered into the texture
     glBindTexture(GL_TEXTURE_2D, d_texture);
-    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+    glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
                      0, 0,
                      static_cast<GLsizei>(d_area.right()),
                      static_cast<GLsizei>(d_area.bottom()), 0);
@@ -185,24 +185,24 @@ void OpenGLWGLPBTextureTarget::initialisePBuffer()
                                     creation_attrs);
 
     if (!d_pbuffer)
-        throw RendererException(
-            "pbuffer creation failure, wglCreatePbufferARB() call failed.");
+        CEGUI_THROW(RendererException(
+            "pbuffer creation failure, wglCreatePbufferARB() call failed."));
 
     d_hdc = wglGetPbufferDCARB(d_pbuffer);
 
     if (!d_hdc)
-        throw RendererException(
-            "pbuffer creation failure, wglGetPbufferDCARB() call failed.");
+        CEGUI_THROW(RendererException(
+            "pbuffer creation failure, wglGetPbufferDCARB() call failed."));
 
     d_context= wglCreateContext(d_hdc);
 
     if (!d_hdc)
-        throw RendererException(
-            "pbuffer creation failure, wglCreateContext() call failed.");
+        CEGUI_THROW(RendererException(
+            "pbuffer creation failure, wglCreateContext() call failed."));
 
     if(!wglShareLists(wglGetCurrentContext(), d_context))
-        throw RendererException(
-            "pbuffer creation failure, wglShareLists() call failed.");
+        CEGUI_THROW(RendererException(
+            "pbuffer creation failure, wglShareLists() call failed."));
 
     // extract the actual size of the created bufer
     int actual_width, actual_height;

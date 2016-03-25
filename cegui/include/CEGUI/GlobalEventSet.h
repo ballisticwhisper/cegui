@@ -48,7 +48,8 @@ namespace CEGUI
 */
 class CEGUIEXPORT GlobalEventSet :
     public EventSet,
-    public Singleton<GlobalEventSet>
+    public Singleton<GlobalEventSet>,
+    public AllocatedObject<GlobalEventSet>
 {
 public:
 	GlobalEventSet();

@@ -28,6 +28,7 @@
  ***************************************************************************/
 #include "CEGUI/widgets/ComboDropList.h"
 #include "CEGUI/widgets/Scrollbar.h"
+#include "CEGUI/widgets/ListboxItem.h"
 #include "CEGUI/CoordConverter.h"
 
 // Start of CEGUI namespace section
@@ -48,11 +49,11 @@ const String ComboDropList::EventListSelectionAccepted( "ListSelectionAccepted" 
 	Constructor for ComboDropList base class
 *************************************************************************/
 ComboDropList::ComboDropList(const String& type, const String& name) :
-    ListWidget(type, name)
+	Listbox(type, name)
 {
 	d_autoArm = false;
 	d_armed = false;
-    d_lastItemSelected = 0;
+    d_lastClickSelected = 0;
 
 	hide();
 
@@ -75,7 +76,7 @@ ComboDropList::~ComboDropList(void)
 *************************************************************************/
 void ComboDropList::initialiseComponents(void)
 {
-    ListWidget::initialiseComponents();
+	Listbox::initialiseComponents();
 
 	// set-up scroll bars so they return capture to us.
 	getVertScrollbar()->setRestoreOldCapture(true);
@@ -90,11 +91,12 @@ void ComboDropList::initialiseComponents(void)
 void ComboDropList::resizeToContent(bool fit_width, bool fit_height)
 {
     if (!d_windowRenderer)
-        throw InvalidRequestException(
-            "Function requires a valid WindowRenderer object to be set.");
+        CEGUI_THROW(InvalidRequestException(
+            "Function requires a valid WindowRenderer object to be set."));
 
-    static_cast<ItemViewWindowRenderer*>(d_windowRenderer)->
-        resizeViewToContent(fit_width, fit_height);
+    static_cast<ListboxWindowRenderer*>(d_windowRenderer)->
+        resizeListToContent(fit_width, fit_height);
+
 }
 
 /*************************************************************************
@@ -102,42 +104,42 @@ void ComboDropList::resizeToContent(bool fit_width, bool fit_height)
 *************************************************************************/
 void ComboDropList::onListSelectionAccepted(WindowEventArgs& e)
 {
-    d_lastItemSelected = getFirstSelectedItem();
+    d_lastClickSelected = getFirstSelectedItem();
 	fireEvent(EventListSelectionAccepted, e, EventNamespace);
 }
 
 /*************************************************************************
     Handler for when list content has changed
 *************************************************************************/
-void ComboDropList::onViewContentsChanged(WindowEventArgs& e)
+void ComboDropList::onListContentsChanged(WindowEventArgs& e)
 {
     // basically see if our 'sticky' selection was removed
-    if ((d_lastItemSelected) && !isItemInList(d_lastItemSelected))
-        d_lastItemSelected = 0;
+    if ((d_lastClickSelected) && !isListboxItemInList(d_lastClickSelected))
+        d_lastClickSelected = 0;
 
     // base class processing
-    ListWidget::onViewContentsChanged(e);
+    Listbox::onListContentsChanged(e);
 }
 
 /*************************************************************************
     Handler for when list selection has changed
 *************************************************************************/
-void ComboDropList::onSelectionChanged(ItemViewEventArgs& e)
+void ComboDropList::onSelectionChanged(WindowEventArgs& e)
 {
     if (!isActive())
-        d_lastItemSelected = getFirstSelectedItem();
+        d_lastClickSelected = getFirstSelectedItem();
 
-    ListWidget::onSelectionChanged(e);
+    Listbox::onSelectionChanged(e);
 }
 
 /*************************************************************************
-	Handler for cursor movement events
+	Handler for mouse movement events
 *************************************************************************/
-void ComboDropList::onCursorMove(CursorInputEventArgs& e)
+void ComboDropList::onMouseMove(MouseEventArgs& e)
 {
-    ListWidget::onCursorMove(e);
+	Listbox::onMouseMove(e);
 
-    // if cursor is within our area (but not our children)
+	// if mouse is within our area (but not our children)
 	if (isHit(e.position))
 	{
 		if (!getChildAtPosition(e.position))
@@ -150,18 +152,19 @@ void ComboDropList::onCursorMove(CursorInputEventArgs& e)
 
 			if (d_armed)
 			{
-                // check for an item under the cursor
-                StandardItem* item = d_itemModel.getItemForIndex(indexAt(e.position));
+				// check for an item under the mouse
+				ListboxItem* selItem = getItemAtPoint(e.position);
 
-                // if an item is under cursor, select it
-                if (item != 0)
-                {
-                    setIndexSelectionState(item, true);
-                }
-                else
-                {
-                    clearSelections();
-                }
+				// if an item is under mouse, select it
+				if (selItem)
+				{
+					setItemSelectState(selItem, true);
+				}
+				else
+				{
+					clearAllSelections();
+				}
+
 			}
 		}
 
@@ -170,27 +173,29 @@ void ComboDropList::onCursorMove(CursorInputEventArgs& e)
 	// not within the list area
 	else
 	{
-		// if left cursor is held, clear any selection
-		if (e.state.isHeld(CIS_Left))
+		// if left mouse button is down, clear any selection
+		if (e.sysKeys & LeftMouse)
 		{
-            clearSelections();
+			clearAllSelections();
 		}
+
 	}
+
 }
 
 
 /*************************************************************************
-    Handler for cursor pressed events
+	Handler for mouse button pressed events
 *************************************************************************/
-void ComboDropList::onCursorPressHold(CursorInputEventArgs& e)
+void ComboDropList::onMouseButtonDown(MouseEventArgs& e)
 {
-    ListWidget::onCursorPressHold(e);
+	Listbox::onMouseButtonDown(e);
 
-    if (e.source == CIS_Left)
+	if (e.button == LeftButton)
 	{
 		if (!isHit(e.position))
 		{
-            clearSelections();
+			clearAllSelections();
 			releaseInput();
 		}
 		else
@@ -200,30 +205,31 @@ void ComboDropList::onCursorPressHold(CursorInputEventArgs& e)
 
 		++e.handled;
 	}
+
 }
 
 
 /*************************************************************************
-	Handler for cursor activation events
+	Handler for mouse button release events
 *************************************************************************/
-void ComboDropList::onCursorActivate(CursorInputEventArgs& e)
+void ComboDropList::onMouseButtonUp(MouseEventArgs& e)
 {
-    ListWidget::onCursorActivate(e);
+	Listbox::onMouseButtonUp(e);
 
-    if (e.source == CIS_Left)
+	if (e.button == LeftButton)
 	{
 		if (d_armed && (getChildAtPosition(e.position) == 0))
 		{
-            // if something was selected, confirm that selection.
-            if (getIndexSelectionStates().size() > 0)
-            {
-                WindowEventArgs args(this);
-                onListSelectionAccepted(args);
-            }
+			// if something was selected, confirm that selection.
+			if (getSelectedCount() > 0)
+			{
+				WindowEventArgs args(this);
+				onListSelectionAccepted(args);
+			}
 
             releaseInput();
 		}
-        // if we are not already armed, in response to a left cursor activation event, we auto-arm.
+		// if we are not already armed, in response to a left button up event, we auto-arm.
 		else
 		{
 			d_armed = true;
@@ -240,17 +246,26 @@ void ComboDropList::onCursorActivate(CursorInputEventArgs& e)
 *************************************************************************/
 void ComboDropList::onCaptureLost(WindowEventArgs& e)
 {
-    ListWidget::onCaptureLost(e);
+	Listbox::onCaptureLost(e);
 	d_armed = false;
 	hide();
 	++e.handled;
 
     // ensure 'sticky' selection remains.
-    if (d_lastItemSelected != 0 && isItemSelected(d_lastItemSelected))
+    if ((d_lastClickSelected) && !d_lastClickSelected->isSelected())
     {
-        clearSelections();
-        setIndexSelectionState(d_lastItemSelected, true);
+        clearAllSelections_impl();
+        setItemSelectState(d_lastClickSelected, true);
     }
+}
+
+
+/*************************************************************************
+	Handler for when window is activated
+*************************************************************************/
+void ComboDropList::onActivated(ActivationEventArgs& e)
+{
+	Listbox::onActivated(e);
 }
 
 } // End of  CEGUI namespace section

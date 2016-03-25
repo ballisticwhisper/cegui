@@ -28,7 +28,6 @@
 #include "CEGUI/RendererModules/Null/GeometryBuffer.h"
 #include "CEGUI/RendererModules/Null/TextureTarget.h"
 #include "CEGUI/RendererModules/Null/Texture.h"
-#include "CEGUI/RendererModules/Null/ShaderWrapper.h"
 #include "CEGUI/ImageCodec.h"
 #include "CEGUI/Exceptions.h"
 #include "CEGUI/System.h"
@@ -50,12 +49,12 @@ NullRenderer& NullRenderer::bootstrapSystem(const int abi)
     System::performVersionTest(CEGUI_VERSION_ABI, abi, CEGUI_FUNCTION_NAME);
 
     if (System::getSingletonPtr())
-        throw InvalidRequestException(
-            "CEGUI::System object is already initialised.");
+        CEGUI_THROW(InvalidRequestException(
+            "CEGUI::System object is already initialised."));
 
 	NullRenderer& renderer = create();
 	
-	DefaultResourceProvider* rp(new DefaultResourceProvider()); 
+	DefaultResourceProvider* rp(CEGUI_NEW_AO DefaultResourceProvider()); 
 
 	// TODO: Create image codec?
 	// NullImageCodec& ic = createNullImageCodec();
@@ -69,8 +68,8 @@ void NullRenderer::destroySystem()
 {
     System* sys;
     if (!(sys = System::getSingletonPtr()))
-        throw InvalidRequestException(
-            "CEGUI::System object is not created or was already destroyed.");
+        CEGUI_THROW(InvalidRequestException(
+            "CEGUI::System object is not created or was already destroyed."));
 
     NullRenderer* renderer = static_cast<NullRenderer*>(sys->getRenderer());
     ResourceProvider* rp = sys->getResourceProvider();
@@ -80,8 +79,8 @@ void NullRenderer::destroySystem()
     System::destroy();
     // ImageCodec used is currently the system default, so we do not destroy
     // it here (since System already did that).
-    //delete ic;
-	delete rp;
+    //CEGUI_DELETE_AO ic;
+	CEGUI_DELETE_AO rp;
     destroy(*renderer);
 }
 
@@ -90,13 +89,13 @@ NullRenderer& NullRenderer::create(const int abi)
 {
     System::performVersionTest(CEGUI_VERSION_ABI, abi, CEGUI_FUNCTION_NAME);
 
-    return *(new NullRenderer());
+    return *CEGUI_NEW_AO NullRenderer();
 }
 
 //----------------------------------------------------------------------------//
 void NullRenderer::destroy(NullRenderer& renderer)
 {
-    delete &renderer;
+    CEGUI_DELETE_AO &renderer;
 }
 
 //----------------------------------------------------------------------------//
@@ -106,58 +105,39 @@ RenderTarget& NullRenderer::getDefaultRenderTarget()
 }
 
 //----------------------------------------------------------------------------//
-RefCounted<RenderMaterial> NullRenderer::createRenderMaterial(const DefaultShaderType shaderType) const
+GeometryBuffer& NullRenderer::createGeometryBuffer()
 {
-    if(shaderType == DS_TEXTURED)
-    {
-        RefCounted<RenderMaterial> render_material(new RenderMaterial(d_shaderWrapperTextured));
+    NullGeometryBuffer* gb = CEGUI_NEW_AO NullGeometryBuffer();
 
-        return render_material;
-    }
-    else if(shaderType == DS_SOLID)
-    {
-        RefCounted<RenderMaterial> render_material(new RenderMaterial(d_shaderWrapperSolid));
+    d_geometryBuffers.push_back(gb);
+    return *gb;
+}
 
-        return render_material;
-    }
-    else
-    {
-        throw RendererException(
-            "A default shader of this type does not exist.");
+//----------------------------------------------------------------------------//
+void NullRenderer::destroyGeometryBuffer(const GeometryBuffer& buffer)
+{
+    GeometryBufferList::iterator i = std::find(d_geometryBuffers.begin(),
+                                               d_geometryBuffers.end(),
+                                               &buffer);
 
-        return RefCounted<RenderMaterial>();
+    if (d_geometryBuffers.end() != i)
+    {
+        d_geometryBuffers.erase(i);
+        CEGUI_DELETE_AO &buffer;
     }
 }
 
 //----------------------------------------------------------------------------//
-GeometryBuffer& NullRenderer::createGeometryBufferTextured(RefCounted<RenderMaterial> renderMaterial)
+void NullRenderer::destroyAllGeometryBuffers()
 {
-    NullGeometryBuffer* geom_buffer = new NullGeometryBuffer(renderMaterial);
-
-    geom_buffer->addVertexAttribute(VAT_POSITION0);
-    geom_buffer->addVertexAttribute(VAT_COLOUR0);
-    geom_buffer->addVertexAttribute(VAT_TEXCOORD0);
-
-    addGeometryBuffer(*geom_buffer);
-    return *geom_buffer;
+    while (!d_geometryBuffers.empty())
+        destroyGeometryBuffer(**d_geometryBuffers.begin());
 }
 
 //----------------------------------------------------------------------------//
-GeometryBuffer& NullRenderer::createGeometryBufferColoured(RefCounted<RenderMaterial> renderMaterial)
+TextureTarget* NullRenderer::createTextureTarget()
 {
-    NullGeometryBuffer* geom_buffer = new NullGeometryBuffer(renderMaterial);
-
-    geom_buffer->addVertexAttribute(VAT_POSITION0);
-    geom_buffer->addVertexAttribute(VAT_COLOUR0);
-
-    addGeometryBuffer(*geom_buffer);
-    return *geom_buffer;
-}
-
-//----------------------------------------------------------------------------//
-TextureTarget* NullRenderer::createTextureTarget(bool addStencilBuffer)
-{
-    TextureTarget* tt = new NullTextureTarget(*this, addStencilBuffer);
+    TextureTarget* tt = CEGUI_NEW_AO NullTextureTarget(*this);
     d_textureTargets.push_back(tt);
     return tt;
 }
@@ -172,7 +152,7 @@ void NullRenderer::destroyTextureTarget(TextureTarget* target)
     if (d_textureTargets.end() != i)
     {
         d_textureTargets.erase(i);
-        delete target;
+        CEGUI_DELETE_AO target;
     }
 }
 
@@ -188,7 +168,7 @@ Texture& NullRenderer::createTexture(const String& name)
 {
     throwIfNameExists(name);
 
-    NullTexture* t = new NullTexture(name);
+    NullTexture* t = CEGUI_NEW_AO NullTexture(name);
     d_textures[name] = t;
 
     logTextureCreation(name);
@@ -202,7 +182,7 @@ Texture& NullRenderer::createTexture(const String& name, const String& filename,
 {
     throwIfNameExists(name);
 
-    NullTexture* t = new NullTexture(name, filename, resourceGroup);
+    NullTexture* t = CEGUI_NEW_AO NullTexture(name, filename, resourceGroup);
     d_textures[name] = t;
 
     logTextureCreation(name);
@@ -215,7 +195,7 @@ Texture& NullRenderer::createTexture(const String& name, const Sizef& size)
 {
     throwIfNameExists(name);
 
-    NullTexture* t = new NullTexture(name, size);
+    NullTexture* t = CEGUI_NEW_AO NullTexture(name, size);
     d_textures[name] = t;
 
     logTextureCreation(name);
@@ -227,8 +207,8 @@ Texture& NullRenderer::createTexture(const String& name, const Sizef& size)
 void NullRenderer::throwIfNameExists(const String& name) const
 {
     if (d_textures.find(name) != d_textures.end())
-        throw AlreadyExistsException(
-            "[NullRenderer] Texture already exists: " + name);
+        CEGUI_THROW(AlreadyExistsException(
+            "[NullRenderer] Texture already exists: " + name));
 }
 
 //----------------------------------------------------------------------------//
@@ -253,7 +233,7 @@ void NullRenderer::destroyTexture(const String& name)
     if (d_textures.end() != i)
     {
         logTextureDestruction(name);
-        delete i->second;
+        CEGUI_DELETE_AO i->second;
         d_textures.erase(i);
     }
 }
@@ -279,8 +259,8 @@ Texture& NullRenderer::getTexture(const String& name) const
     TextureMap::const_iterator i = d_textures.find(name);
     
     if (i == d_textures.end())
-        throw UnknownObjectException(
-            "Texture does not exist: " + name);
+        CEGUI_THROW(UnknownObjectException(
+            "Texture does not exist: " + name));
 
     return *i->second;
 }
@@ -308,13 +288,13 @@ const Sizef& NullRenderer::getDisplaySize() const
 }
 
 //----------------------------------------------------------------------------//
-const glm::vec2& NullRenderer::getDisplayDPI() const
+const Vector2f& NullRenderer::getDisplayDPI() const
 {
     return d_displayDPI;
 }
 
 //----------------------------------------------------------------------------//
-unsigned int NullRenderer::getMaxTextureSize() const
+uint NullRenderer::getMaxTextureSize() const
 {
     return d_maxTextureSize;
 }
@@ -337,9 +317,6 @@ NullRenderer::NullRenderer() :
 //----------------------------------------------------------------------------//
 NullRenderer::~NullRenderer()
 {
-    delete d_shaderWrapperTextured;
-    delete d_shaderWrapperSolid;
-
     destroyAllGeometryBuffers();
     destroyAllTextureTargets();
     destroyAllTextures();
@@ -350,11 +327,8 @@ NullRenderer::~NullRenderer()
 //----------------------------------------------------------------------------//
 void NullRenderer::constructor_impl()
 {
-    d_shaderWrapperTextured = new NullShaderWrapper();
-    d_shaderWrapperSolid = new NullShaderWrapper();
-
     // create default target & rendering root (surface) that uses it
-    d_defaultTarget = new NullRenderTarget(*this);
+    d_defaultTarget = CEGUI_NEW_AO NullRenderTarget<>(*this);
 }
 
 //----------------------------------------------------------------------------//
@@ -372,13 +346,10 @@ void NullRenderer::setDisplaySize(const Sizef& sz)
 }
 
 //----------------------------------------------------------------------------//
-bool NullRenderer::isTexCoordSystemFlipped() const
-{
-    return false;
-}
-
-//----------------------------------------------------------------------------//
 
 } // End of  CEGUI namespace section
 
+//----------------------------------------------------------------------------//
+// Implementation of template base class
+#include "./RenderTarget.inl"
 

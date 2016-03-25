@@ -78,11 +78,11 @@ PFNGLGENERATEMIPMAPOES glGenerateMipmapEXT = 0;
 const float OpenGLESFBOTextureTarget::DEFAULT_SIZE = 128.0f;
 
 //----------------------------------------------------------------------------//
-std::uint32_t OpenGLESFBOTextureTarget::s_textureNumber = 0;
+uint OpenGLESFBOTextureTarget::s_textureNumber = 0;
 
 //----------------------------------------------------------------------------//
-OpenGLESFBOTextureTarget::OpenGLESFBOTextureTarget(OpenGLESRenderer& owner, bool addStencilBuffer) :
-    OpenGLESRenderTarget(owner, addStencilBuffer),
+OpenGLESFBOTextureTarget::OpenGLESFBOTextureTarget(OpenGLESRenderer& owner) :
+    OpenGLESRenderTarget<TextureTarget>(owner),
     d_texture(0)
 {
     // this essentially creates a 'null' CEGUI::Texture
@@ -99,7 +99,7 @@ OpenGLESFBOTextureTarget::OpenGLESFBOTextureTarget(OpenGLESRenderer& owner, bool
 String OpenGLESFBOTextureTarget::generateTextureName()
 {
     String tmp("_gles_tt_tex_");
-    tmp.append(PropertyHelper<std::uint32_t>::toString(s_textureNumber++));
+    tmp.append(PropertyHelper<uint>::toString(s_textureNumber++));
 
     return tmp;
 }
@@ -239,10 +239,16 @@ void OpenGLESFBOTextureTarget::resizeRenderTexture()
 }
 
 //----------------------------------------------------------------------------//
+bool OpenGLESFBOTextureTarget::isRenderingInverted() const
+{
+    return true;
+}
+
+//----------------------------------------------------------------------------//
 void OpenGLESFBOTextureTarget::initializedFBOExtension()
 {
 	if (!OpenGLESRenderer::isGLExtensionSupported("GL_OES_framebuffer_object"))
-	    throw InvalidRequestException("This platform does not support FBO");
+	    CEGUI_THROW(InvalidRequestException("This platform does not support FBO"));
 
 #ifndef __APPLE__
 	glIsRenderbufferEXT =
@@ -298,4 +304,7 @@ void OpenGLESFBOTextureTarget::initializedFBOExtension()
 
 } // End of  CEGUI namespace section
 
+//----------------------------------------------------------------------------//
+// Implementation of template base class
+#include "./RenderTarget.inl"
 

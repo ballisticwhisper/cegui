@@ -144,8 +144,8 @@ public:
         when you have no other option available. If you decide to use it anyway,
         make sure the window hierarchy from the entry point is small.
 
-    \param name
-        Name of the child to look for.
+    \param ID
+        uint ID code to look for.
 
     \return
        - true if at least one child window was found with the name \a name

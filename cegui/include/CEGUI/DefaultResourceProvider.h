@@ -32,7 +32,7 @@
 #include "CEGUI/Base.h"
 #include "CEGUI/ResourceProvider.h"
 
-#include <unordered_map>
+#include <map>
 
 #if defined(_MSC_VER)
 #	pragma warning(push)
@@ -113,7 +113,7 @@ protected:
     */
     String getFinalFilename(const String& filename, const String& resourceGroup) const;
 
-    typedef std::unordered_map<String, String> ResourceGroupMap;
+    typedef std::map<String, String, StringFastLessCompare> ResourceGroupMap;
     ResourceGroupMap    d_resourceGroups;
 };
 

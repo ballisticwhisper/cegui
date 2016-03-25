@@ -107,7 +107,7 @@ Affector* Animation::createAffector(void)
 {
     // no checking needed!
 
-    Affector* ret = new Affector(this);
+    Affector* ret = CEGUI_NEW_AO Affector(this);
     d_affectors.push_back(ret);
 
     return ret;
@@ -132,11 +132,11 @@ void Animation::destroyAffector(Affector* affector)
 
     if (it == d_affectors.end())
     {
-        throw InvalidRequestException("Given affector not found!");
+        CEGUI_THROW(InvalidRequestException("Given affector not found!"));
     }
 
     d_affectors.erase(it);
-    delete affector;
+    CEGUI_DELETE_AO affector;
 }
 
 //----------------------------------------------------------------------------//
@@ -144,7 +144,7 @@ Affector* Animation::getAffectorAtIdx(size_t index) const
 {
     if (index >= d_affectors.size())
     {
-        throw InvalidRequestException("Out of bounds.");
+        CEGUI_THROW(InvalidRequestException("Out of bounds."));
     }
 
     AffectorList::const_iterator it = d_affectors.begin();
@@ -169,9 +169,9 @@ void Animation::defineAutoSubscription(const String& eventName,
     {
         if (it->second == action)
         {
-            throw InvalidRequestException(
+            CEGUI_THROW(InvalidRequestException(
                             "Unable to define given Auto Subscription - exactly "
-                            "the same auto subscription is already there!");
+                            "the same auto subscription is already there!"));
         }
 
         ++it;
@@ -197,8 +197,8 @@ void Animation::undefineAutoSubscription(const String& eventName,
         ++it;
     }
 
-    throw InvalidRequestException(
-        "Unable to undefine given Auto Subscription - not found!");
+    CEGUI_THROW(InvalidRequestException(
+        "Unable to undefine given Auto Subscription - not found!"));
 }
 
 //----------------------------------------------------------------------------//
@@ -252,9 +252,9 @@ void Animation::autoSubscribe(AnimationInstance* instance)
         }
         else
         {
-            throw InvalidRequestException(
+            CEGUI_THROW(InvalidRequestException(
                             "Unable to auto subscribe! "
-                            "'" + a + "' is not a valid action.");
+                            "'" + a + "' is not a valid action."));
         }
 
         instance->addAutoConnection(connection);

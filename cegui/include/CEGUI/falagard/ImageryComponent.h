@@ -207,7 +207,7 @@ namespace CEGUI
             Return the name of the property that will be used to determine the image for this ImageryComponent.
 
         \return
-            String object holding the name of a Property.
+            String object holding the name of a Propery.
         */
         const String& getImagePropertySource() const;
 
@@ -216,7 +216,7 @@ namespace CEGUI
             Set the name of the property that will be used to determine the image for this ImageryComponent.
 
         \param property
-            String object holding the name of a Property.  The property should access a imageset & image specification.
+            String object holding the name of a Propery.  The property should access a imageset & image specification.
 
         \return
             Nothing.
@@ -224,10 +224,8 @@ namespace CEGUI
         void setImagePropertySource(const String& property);
 
     protected:
-        void addImageRenderGeometryToWindow_impl(
-            Window& srcWindow, Rectf& destRect,
-            const CEGUI::ColourRect* modColours,
-            const Rectf* clipper, bool clipToDisplay) const override;
+        // implemets abstract from base
+        void render_impl(Window& srcWindow, Rectf& destRect, const CEGUI::ColourRect* modColours, const Rectf* clipper, bool clipToDisplay) const;
 
         const Image*         d_image;           //!< CEGUI::Image to be drawn by this image component.
         //! Vertical formatting to be applied when rendering the image component.

@@ -36,6 +36,7 @@ namespace CEGUI
 DirectFBGeometryBuffer::DirectFBGeometryBuffer(DirectFBRenderer& owner) :
     d_owner(owner),
     d_activeTexture(0),
+    d_clipRect(0, 0, 0, 0),
     d_clippingActive(true),
     d_translation(0, 0, 0),
     d_rotation(0, 0, 0),
@@ -60,10 +61,10 @@ void DirectFBGeometryBuffer::draw() const
 
     // setup clip region
     const DFBRegion clip_region = {
-        static_cast<int>(d_preparedClippingRegion.left()),
-        static_cast<int>(d_preparedClippingRegion.top()),
-        static_cast<int>(d_preparedClippingRegion.right()),
-        static_cast<int>(d_preparedClippingRegion.bottom()) };
+        static_cast<int>(d_clipRect.left()),
+        static_cast<int>(d_clipRect.top()),
+        static_cast<int>(d_clipRect.right()),
+        static_cast<int>(d_clipRect.bottom()) };
 
     // apply the transformations we need to use.
     if (!d_matrixValid)
@@ -102,24 +103,33 @@ void DirectFBGeometryBuffer::draw() const
 }
 
 //----------------------------------------------------------------------------//
-void DirectFBGeometryBuffer::setTranslation(const glm::vec3& v)
+void DirectFBGeometryBuffer::setTranslation(const Vector3f& v)
 {
     d_translation = v;
     d_matrixValid = false;
 }
 
 //----------------------------------------------------------------------------//
-void DirectFBGeometryBuffer::setRotation(const glm::quat& r)
+void DirectFBGeometryBuffer::setRotation(const Quaternion& r)
 {
     d_rotation = r;
     d_matrixValid = false;
 }
 
 //----------------------------------------------------------------------------//
-void DirectFBGeometryBuffer::setPivot(const glm::vec3& p)
+void DirectFBGeometryBuffer::setPivot(const Vector3f& p)
 {
     d_pivot = p;
     d_matrixValid = false;
+}
+
+//----------------------------------------------------------------------------//
+void DirectFBGeometryBuffer::setClippingRegion(const Rectf& region)
+{
+    d_clipRect.top(ceguimax(0.0f, region.top()));
+    d_clipRect.bottom(ceguimax(0.0f, region.bottom()));
+    d_clipRect.left(ceguimax(0.0f, region.left()));
+    d_clipRect.right(ceguimax(0.0f, region.right()));
 }
 
 //----------------------------------------------------------------------------//
@@ -130,7 +140,7 @@ void DirectFBGeometryBuffer::appendVertex(const Vertex& vertex)
 
 //----------------------------------------------------------------------------//
 void DirectFBGeometryBuffer::appendGeometry(const Vertex* const vbuff,
-                                            unsigned int vertex_count)
+                                            uint vertex_count)
 {
     IDirectFBSurface* t =
         d_activeTexture ? d_activeTexture->getDirectFBSurface() : 0;
@@ -151,7 +161,7 @@ void DirectFBGeometryBuffer::appendGeometry(const Vertex* const vbuff,
     // buffer these vertices
     DFBVertex vd;
     const Vertex* vs = vbuff;
-    for (unsigned int i = 0; i < vertex_count; ++i, ++vs)
+    for (uint i = 0; i < vertex_count; ++i, ++vs)
     {
         // copy vertex info the buffer, converting from CEGUI::Vertex to
         // something directly usable by DirectFB as needed.
@@ -187,13 +197,13 @@ Texture* DirectFBGeometryBuffer::getActiveTexture() const
 }
 
 //----------------------------------------------------------------------------//
-unsigned int DirectFBGeometryBuffer::getVertexCount() const
+uint DirectFBGeometryBuffer::getVertexCount() const
 {
     return d_vertices.size();
 }
 
 //----------------------------------------------------------------------------//
-unsigned int DirectFBGeometryBuffer::getBatchCount() const
+uint DirectFBGeometryBuffer::getBatchCount() const
 {
     return d_batches.size();
 }

@@ -51,7 +51,7 @@ public:
 
     // Implementation of public abstract interface
     void parseXML(XMLHandler& handler, const RawDataContainer& source,
-                  const String& schemaName, bool /*allowXmlValidation*/);
+                  const String& schemaName);
 
 protected:
     // Implementation of abstract interface.

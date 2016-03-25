@@ -54,7 +54,8 @@ namespace CEGUI
     \note
         An Event object may not be copied.
 */
-class CEGUIEXPORT Event
+class CEGUIEXPORT Event :
+    public AllocatedObject<Event>
 {
 public:
     /*!
@@ -220,7 +221,8 @@ protected:
         return *this;
     }
 
-    typedef std::multimap<Group, Connection, std::less<Group> > SlotContainer;
+    typedef std::multimap<Group, Connection, std::less<Group>
+        CEGUI_MULTIMAP_ALLOC(Group, Connection)> SlotContainer;
     SlotContainer d_slots;  //!< Collection holding ref-counted bound slots
     const String d_name;    //!< Name of this event
 };

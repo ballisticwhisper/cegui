@@ -42,7 +42,8 @@ namespace CEGUI
 	Abstract interface required for all scripting support modules to be used with
 	the CEGUI system.
 */
-class CEGUIEXPORT ScriptModule
+class CEGUIEXPORT ScriptModule :
+    public AllocatedObject<ScriptModule>
 {
 public:
 	/*************************************************************************
@@ -234,7 +235,8 @@ protected:
 \brief
 	Functor class used for binding named script functions to events
 */
-class CEGUIEXPORT ScriptFunctor
+class CEGUIEXPORT ScriptFunctor :
+    public AllocatedObject<ScriptFunctor>
 {
 public:
 	ScriptFunctor(const String& functionName) : scriptFunctionName(functionName) {}

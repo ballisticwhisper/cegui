@@ -29,6 +29,7 @@
 
 #include "CEGUI/FormattedRenderedString.h"
 #include "CEGUI/JustifiedRenderedString.h"
+#include "CEGUI/Vector.h"
 #include <vector>
 
 // Start of CEGUI namespace section
@@ -49,21 +50,20 @@ public:
     ~RenderedStringWordWrapper();
 
     // implementation of base interface
-    void format(const Window* ref_wnd, const Sizef& area_size) override;
-    std::vector<GeometryBuffer*> createRenderGeometry(
-        const Window* ref_wnd,
-        const glm::vec2& position, const ColourRect* mod_colours,
-        const Rectf* clip_rect) const override;
-    size_t getFormattedLineCount() const override;
-    float getHorizontalExtent(const Window* ref_wnd) const override;
-    float getVerticalExtent(const Window* ref_wnd) const override;
-    std::size_t getNumOfFormattedTextLines() const override;
+    void format(const Window* ref_wnd, const Sizef& area_size);
+    void draw(const Window* ref_wnd, GeometryBuffer& buffer,
+              const Vector2f& position, const ColourRect* mod_colours,
+              const Rectf* clip_rect) const;
+    size_t getFormattedLineCount() const;
+    float getHorizontalExtent(const Window* ref_wnd) const;
+    float getVerticalExtent(const Window* ref_wnd) const;
 
 protected:
     //! Delete the current formatters and associated RenderedStrings
     void deleteFormatters();
     //! type of collection used to track the formatted lines.
-    typedef std::vector<FormattedRenderedString*> LineList;
+    typedef std::vector<FormattedRenderedString*
+        CEGUI_VECTOR_ALLOC(FormattedRenderedString*)> LineList;
     //! collection of lines.
     LineList d_lines;
 };
@@ -95,8 +95,6 @@ void RenderedStringWordWrapper<T>::format(const Window* ref_wnd,
 {
     deleteFormatters();
 
-    bool was_word_split = false;
-
     RenderedString rstring, lstring;
     rstring = *d_renderedString;
     float rs_width;
@@ -112,8 +110,8 @@ void RenderedStringWordWrapper<T>::format(const Window* ref_wnd,
                 break;
 
             // split rstring at width into lstring and remaining rstring
-            was_word_split = rstring.split(ref_wnd, line, area_size.d_width, lstring) || was_word_split;
-            frs = new T(*new RenderedString(lstring));
+            rstring.split(ref_wnd, line, area_size.d_width, lstring);
+            frs = CEGUI_NEW_AO T(*new RenderedString(lstring));
             frs->format(ref_wnd, area_size);
             d_lines.push_back(frs);
             line = 0;
@@ -121,37 +119,26 @@ void RenderedStringWordWrapper<T>::format(const Window* ref_wnd,
     }
 
     // last line.
-    frs = new T(*new RenderedString(rstring));
+    frs = CEGUI_NEW_AO T(*new RenderedString(rstring));
     frs->format(ref_wnd, area_size);
     d_lines.push_back(frs);
-
-    setWasWordSplit(was_word_split);
 }
 
 //----------------------------------------------------------------------------//
 template <typename T>
-std::vector<GeometryBuffer*> RenderedStringWordWrapper<T>::createRenderGeometry(
-    const Window* ref_wnd,
-    const glm::vec2& position,
-    const ColourRect* mod_colours,
-    const Rectf* clip_rect) const
+void RenderedStringWordWrapper<T>::draw(const Window* ref_wnd,
+                                        GeometryBuffer& buffer,
+                                        const Vector2f& position,
+                                        const ColourRect* mod_colours,
+                                        const Rectf* clip_rect) const
 {
-    glm::vec2 line_pos(position);
-    std::vector<GeometryBuffer*> geomBuffers;
-
+    Vector2f line_pos(position);
     typename LineList::const_iterator i = d_lines.begin();
     for (; i != d_lines.end(); ++i)
     {
-        std::vector<GeometryBuffer*> currentRenderGeometry =
-            (*i)->createRenderGeometry(ref_wnd, line_pos, mod_colours, clip_rect);
-
-        geomBuffers.insert(geomBuffers.end(), currentRenderGeometry.begin(),
-            currentRenderGeometry.end());
-
-        line_pos.y += (*i)->getVerticalExtent(ref_wnd);
+        (*i)->draw(ref_wnd, buffer, line_pos, mod_colours, clip_rect);
+        line_pos.d_y += (*i)->getVerticalExtent(ref_wnd);
     }
-
-    return geomBuffers;
 }
 
 //----------------------------------------------------------------------------//
@@ -195,17 +182,6 @@ float RenderedStringWordWrapper<T>::getVerticalExtent(const Window* ref_wnd) con
 
 //----------------------------------------------------------------------------//
 template <typename T>
-std::size_t RenderedStringWordWrapper<T>::getNumOfFormattedTextLines() const
-{
-    std::size_t ret(0);
-    for ( LineList::const_iterator line(d_lines.begin());
-          line != d_lines.end();  ++line)
-        ret += (*line)->getNumOfOriginalTextLines();
-    return ret;
-}
-
-//----------------------------------------------------------------------------//
-template <typename T>
 void RenderedStringWordWrapper<T>::deleteFormatters()
 {
     for (size_t i = 0; i < d_lines.size(); ++i)
@@ -213,9 +189,9 @@ void RenderedStringWordWrapper<T>::deleteFormatters()
         // get the rendered string back from rthe formatter
         const RenderedString* rs = &d_lines[i]->getRenderedString();
         // delete the formatter
-        delete d_lines[i];
+        CEGUI_DELETE_AO d_lines[i];
         // delete the rendered string.
-        delete rs;
+        CEGUI_DELETE_AO rs;
     }
 
     d_lines.clear();

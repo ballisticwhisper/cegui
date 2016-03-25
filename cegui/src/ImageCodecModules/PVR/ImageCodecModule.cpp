@@ -29,13 +29,13 @@
 //----------------------------------------------------------------------------//
 CEGUI::ImageCodec* createImageCodec(void)
 {
-    return new CEGUI::PVRImageCodec();
+    return CEGUI_NEW_AO CEGUI::PVRImageCodec();
 }
 
 //----------------------------------------------------------------------------//
 void destroyImageCodec(CEGUI::ImageCodec* imageCodec)
 {
-    delete imageCodec;
+    CEGUI_DELETE_AO imageCodec;
 }
 
 //----------------------------------------------------------------------------//

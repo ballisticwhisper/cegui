@@ -40,7 +40,8 @@ namespace CEGUI
 \note
     This interface is intended for internal use only.
 */
-class ImageFactory
+class ImageFactory : public
+    AllocatedObject<ImageFactory>
 {
 public:
     //! base class virtual destructor.
@@ -73,21 +74,21 @@ public:
 template <typename T>
 Image& TplImageFactory<T>::create(const String& name)
 {
-    return *new T(name);
+    return *CEGUI_NEW_AO T(name);
 }
 
 //---------------------------------------------------------------------------//
 template <typename T>
 Image& TplImageFactory<T>::create(const XMLAttributes& attributes)
 {
-    return *new T(attributes);
+    return *CEGUI_NEW_AO T(attributes);
 }
 
 //---------------------------------------------------------------------------//
 template <typename T>
 void TplImageFactory<T>::destroy(Image& image)
 {
-    delete &image;
+    CEGUI_DELETE_AO &image;
 }
 
 //---------------------------------------------------------------------------//

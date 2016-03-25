@@ -43,7 +43,7 @@ class OpenGLTexture;
 class OpenGLApplePBTextureTarget : public OpenGLTextureTarget
 {
 public:
-    OpenGLApplePBTextureTarget(OpenGLRendererBase& owner, bool addStencilBuffer);
+    OpenGLApplePBTextureTarget(OpenGLRendererBase& owner);
     virtual ~OpenGLApplePBTextureTarget();
 
     // overrides from OpenGLRenderTarget

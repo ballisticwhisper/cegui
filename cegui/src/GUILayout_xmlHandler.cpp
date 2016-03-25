@@ -193,12 +193,12 @@ void GUILayout_xmlHandler::elementGUILayoutStart(const XMLAttributes& attributes
 
     if (version != NativeVersion)
     {
-        throw InvalidRequestException(
+        CEGUI_THROW(InvalidRequestException(
             "You are attempting to load a layout of version '" + version +
             "' but this CEGUI version is only meant to load layouts of "
             "version '" + NativeVersion + "'. Consider using the "
             "migrate.py script bundled with CEGUI Unified Editor to "
-            "migrate your data.");
+            "migrate your data."));
     }
 }
 
@@ -215,7 +215,7 @@ void GUILayout_xmlHandler::elementWindowStart(const XMLAttributes& attributes)
         attributes.getValueAsString(Window::WindowNameXMLAttributeName));
 
     // attempt to create window
-    try
+    CEGUI_TRY
     {
         Window* wnd = WindowManager::getSingleton().createWindow(windowType, windowName);
 
@@ -231,23 +231,23 @@ void GUILayout_xmlHandler::elementWindowStart(const XMLAttributes& attributes)
         // tell it that it is being initialised
         wnd->beginInitialisation();
     }
-    catch (AlreadyExistsException&)
+    CEGUI_CATCH (AlreadyExistsException&)
     {
         // delete all windows created
         cleanupLoadedWindows();
 
         // signal error - with more info about what we have done.
-        throw InvalidRequestException(
-            "layout loading has been aborted since Window named '" + windowName + "' already exists.");
+        CEGUI_THROW(InvalidRequestException(
+            "layout loading has been aborted since Window named '" + windowName + "' already exists."));
     }
-    catch (UnknownObjectException&)
+    CEGUI_CATCH (UnknownObjectException&)
     {
         // delete all windows created
         cleanupLoadedWindows();
 
         // signal error - with more info about what we have done.
-        throw InvalidRequestException(
-            "layout loading has been aborted since no WindowFactory is available for '" + windowType + "' objects.");
+        CEGUI_THROW(InvalidRequestException(
+            "layout loading has been aborted since no WindowFactory is available for '" + windowType + "' objects."));
     }
 }
 
@@ -260,7 +260,7 @@ void GUILayout_xmlHandler::elementAutoWindowStart(const XMLAttributes& attribute
     const String name_path(
         attributes.getValueAsString(Window::AutoWindowNamePathXMLAttributeName));
 
-    try
+    CEGUI_TRY
     {
         // we need a window to fetch children
         if (!d_stack.empty())
@@ -270,15 +270,15 @@ void GUILayout_xmlHandler::elementAutoWindowStart(const XMLAttributes& attribute
             d_stack.push_back(WindowStackEntry(wnd,false));
         }
     }
-    catch (UnknownObjectException&)
+    CEGUI_CATCH (UnknownObjectException&)
     {
         // delete all windows created
         cleanupLoadedWindows();
 
         // signal error - with more info about what we have done.
-        throw InvalidRequestException(
+        CEGUI_THROW(InvalidRequestException(
             "layout loading has been aborted since auto window '" +
-            name_path + "' could not be referenced.");
+            name_path + "' could not be referenced."));
     }
 }
 
@@ -301,7 +301,7 @@ void GUILayout_xmlHandler::elementUserStringStart(const XMLAttributes& attribute
     if (!userStringValue.empty())
     {
         d_stringItemName.clear();
-        try
+        CEGUI_TRY
         {
             // need a window to be able to set properties!
             if (!d_stack.empty())
@@ -312,7 +312,7 @@ void GUILayout_xmlHandler::elementUserStringStart(const XMLAttributes& attribute
                 curwindow->setUserString(userStringName, userStringValue);
             }
         }
-        catch (Exception&)
+        CEGUI_CATCH (Exception&)
         {
             // Don't do anything here, but the error will have been logged.
         }
@@ -345,7 +345,7 @@ void GUILayout_xmlHandler::elementPropertyStart(const XMLAttributes& attributes)
     if (!propertyValue.empty())
     {
         d_stringItemName.clear();
-        try
+        CEGUI_TRY
         {
             // need a window to be able to set properties!
             if (!d_stack.empty())
@@ -367,7 +367,7 @@ void GUILayout_xmlHandler::elementPropertyStart(const XMLAttributes& attributes)
                     curwindow->setProperty(propertyName, propertyValue);
             }
         }
-        catch (Exception&)
+        CEGUI_CATCH (Exception&)
         {
             // Don't do anything here, but the error will have been logged.
         }
@@ -387,7 +387,7 @@ void GUILayout_xmlHandler::elementPropertyStart(const XMLAttributes& attributes)
 *************************************************************************/
 void GUILayout_xmlHandler::elementLayoutImportStart(const XMLAttributes& attributes)
 {
-    try
+    CEGUI_TRY
     {
         // attempt to load the imported sub-layout
         Window* subLayout = WindowManager::getSingleton().loadLayoutFromFile(
@@ -401,14 +401,14 @@ void GUILayout_xmlHandler::elementLayoutImportStart(const XMLAttributes& attribu
             d_stack.back().first->addChild(subLayout);
     }
     // something failed when loading the sub-layout
-    catch (Exception&)
+    CEGUI_CATCH (Exception&)
     {
         // delete all windows created so far
         cleanupLoadedWindows();
 
         // signal error - with more info about what we have done.
-        throw GenericException(
-            "layout loading aborted due to imported layout load failure (see error(s) above).");
+        CEGUI_THROW(GenericException(
+            "layout loading aborted due to imported layout load failure (see error(s) above)."));
     }
 }
 
@@ -423,12 +423,12 @@ void GUILayout_xmlHandler::elementEventStart(const XMLAttributes& attributes)
     String functionName(attributes.getValueAsString(EventFunctionAttribute));
 
     // attempt to subscribe property on window
-    try
+    CEGUI_TRY
     {
         if (!d_stack.empty())
             d_stack.back().first->subscribeScriptedEvent(eventName, functionName);
     }
-    catch (Exception&)
+    CEGUI_CATCH (Exception&)
     {
         // Don't do anything here, but the error will have been logged.
     }
@@ -469,7 +469,7 @@ void GUILayout_xmlHandler::elementUserStringEnd()
     {
         return;
     }
-    try
+    CEGUI_TRY
     {
         // need a window to be able to set user strings!
         if (!d_stack.empty())
@@ -480,7 +480,7 @@ void GUILayout_xmlHandler::elementUserStringEnd()
             curwindow->setUserString(d_stringItemName, d_stringItemValue);
         }
     }
-    catch (Exception&)
+    CEGUI_CATCH (Exception&)
     {
         // Don't do anything here, but the error will have been logged.
     }
@@ -496,7 +496,7 @@ void GUILayout_xmlHandler::elementPropertyEnd()
     {
         return;
     }
-    try
+    CEGUI_TRY
     {
         // need a window to be able to set properties!
         if (!d_stack.empty())
@@ -518,7 +518,7 @@ void GUILayout_xmlHandler::elementPropertyEnd()
                 curwindow->setProperty(d_stringItemName, d_stringItemValue);
         }
     }
-    catch (Exception&)
+    CEGUI_CATCH (Exception&)
     {
         // Don't do anything here, but the error will have been logged.
     }

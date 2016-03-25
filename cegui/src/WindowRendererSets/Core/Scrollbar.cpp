@@ -49,15 +49,14 @@ namespace CEGUI
         false);
     }
 
-    void FalagardScrollbar::createRenderGeometry()
+    void FalagardScrollbar::render()
     {
         const StateImagery* imagery;
 
         // get WidgetLookFeel for the assigned look.
         const WidgetLookFeel& wlf = getLookNFeel();
         // try and get imagery for our current state
-        imagery = &wlf.getStateImagery(d_window->isEffectiveDisabled() ? "Disabled"
-            : (d_window->isFocused() ? "EnabledFocused" : "Enabled"));
+        imagery = &wlf.getStateImagery(d_window->isEffectiveDisabled() ? "Disabled" : "Enabled");
         // peform the rendering operation.
         imagery->render(*d_window);
     }
@@ -131,18 +130,18 @@ namespace CEGUI
         }
     }
 
-    float FalagardScrollbar::getAdjustDirectionFromPoint(const glm::vec2& pt) const
+    float FalagardScrollbar::getAdjustDirectionFromPoint(const Vector2f& pt) const
     {
         Scrollbar* w = (Scrollbar*)d_window;
         const Rectf& absrect(w->getThumb()->getUnclippedOuterRect().get());
 
-        if ((d_vertical && (pt.y > absrect.bottom())) ||
-            (!d_vertical && (pt.x > absrect.right())))
+        if ((d_vertical && (pt.d_y > absrect.bottom())) ||
+            (!d_vertical && (pt.d_x > absrect.right())))
         {
             return 1;
         }
-        else if ((d_vertical && (pt.y < absrect.top())) ||
-            (!d_vertical && (pt.x < absrect.left())))
+        else if ((d_vertical && (pt.d_y < absrect.top())) ||
+            (!d_vertical && (pt.d_x < absrect.left())))
         {
             return -1;
         }

@@ -34,7 +34,8 @@
 namespace CEGUI
 {
 //! Common base class used for renderable components within an ImagerySection.
-class CEGUIEXPORT FalagardComponentBase
+class CEGUIEXPORT FalagardComponentBase :
+    public AllocatedObject<FalagardComponentBase>
 {
 public:
     FalagardComponentBase();
@@ -42,7 +43,8 @@ public:
 
     /*!
     \brief
-        Creates the render geometry for this component and adds it to the Window
+        Render this component.  More correctly, the component is cached for
+        rendering.
 
     \param srcWindow
         Window to use as the base for translating the component's ComponentArea
@@ -53,13 +55,13 @@ public:
         component's stored colour values to calculate a set of 'final' colour
         values to be used.  May be 0.
     */
-    void createRenderGeometryAndAddToWindow(
-        Window& srcWindow, const CEGUI::ColourRect* modColours = 0,
-        const Rectf* clipper = 0, bool clipToDisplay = false) const;
+    void render(Window& srcWindow, const CEGUI::ColourRect* modColours = 0,
+                const Rectf* clipper = 0, bool clipToDisplay = false) const;
 
     /*!
     \brief
-        Creates the render geometry for this component and adds it to the Window
+        Render this component.  More correctly, the component is cached for
+        rendering.
 
     \param srcWindow
         Window to use as the base for translating the component's ComponentArea
@@ -74,10 +76,9 @@ public:
         component's stored colour values to calculate a set of 'final' colour
         values to be used.  May be 0.
     */
-    void createRenderGeometryAndAddToWindow(
-        Window& srcWindow, const Rectf& baseRect,
-        const CEGUI::ColourRect* modColours = 0,
-        const Rectf* clipper = 0, bool clipToDisplay = false) const;
+    void render(Window& srcWindow, const Rectf& baseRect,
+                const CEGUI::ColourRect* modColours = 0,
+                const Rectf* clipper = 0, bool clipToDisplay = false) const;
 
     /*!
     \brief
@@ -153,10 +154,9 @@ protected:
                          ColourRect& cr) const;
 
     //! Function to do main render caching work.
-    virtual void addImageRenderGeometryToWindow_impl(
-        Window& srcWindow, Rectf& destRect,
-        const CEGUI::ColourRect* modColours,
-        const Rectf* clipper, bool clipToDisplay) const = 0;
+    virtual void render_impl(Window& srcWindow, Rectf& destRect,
+                             const CEGUI::ColourRect* modColours,
+                             const Rectf* clipper, bool clipToDisplay) const = 0;
 
     /*!
     \brief

@@ -67,7 +67,7 @@ namespace CEGUI
             }
             area_name += "Scroll";
 
-            if (wlf.isNamedAreaPresent(area_name))
+            if (wlf.isNamedAreaDefined(area_name))
             {
                 return wlf.getNamedArea(area_name).getArea().getPixelRect(*w);
             }
@@ -77,7 +77,7 @@ namespace CEGUI
         return wlf.getNamedArea("ItemRenderingArea").getArea().getPixelRect(*w);
     }
 
-    void FalagardMultiColumnList::createRenderGeometry()
+    void FalagardMultiColumnList::render()
     {
         MultiColumnList* w = (MultiColumnList*)d_window;
         const ListHeader* header = w->getListHeader();
@@ -90,7 +90,7 @@ namespace CEGUI
         //
         // Render list items
         //
-        glm::vec3 itemPos;
+        Vector3f itemPos;
         Sizef itemSize;
         Rectf itemClipper, itemRect;
 
@@ -98,22 +98,22 @@ namespace CEGUI
         Rectf itemsArea(getListRenderArea());
 
         // set up initial positional details for items
-        itemPos.y = itemsArea.top() - vertScrollbar->getScrollPosition();
-        itemPos.z = 0.0f;
+        itemPos.d_y = itemsArea.top() - vertScrollbar->getScrollPosition();
+        itemPos.d_z = 0.0f;
 
         const float alpha = w->getEffectiveAlpha();
 
         // loop through the items
-        for (unsigned int i = 0; i < w->getRowCount(); ++i)
+        for (uint i = 0; i < w->getRowCount(); ++i)
         {
             // set initial x position for this row.
-            itemPos.x = itemsArea.left() - horzScrollbar->getScrollPosition();
+            itemPos.d_x = itemsArea.left() - horzScrollbar->getScrollPosition();
 
             // calculate height for this row.
             itemSize.d_height = w->getHighestRowItemHeight(i);
 
             // loop through the columns in this row
-            for (unsigned int j = 0; j < w->getColumnCount(); ++j)
+            for (uint j = 0; j < w->getColumnCount(); ++j)
             {
                 // allow item to use full width of the column
                 itemSize.d_width = CoordConverter::asAbsolute(header->getColumnWidth(j), header->getPixelSize().d_width);
@@ -124,30 +124,28 @@ namespace CEGUI
                 if (item)
                 {
                     // calculate destination area for this item.
-                    itemRect.left(itemPos.x);
-                    itemRect.top(itemPos.y);
+                    itemRect.left(itemPos.d_x);
+                    itemRect.top(itemPos.d_y);
                     itemRect.setSize(itemSize);
                     itemClipper = itemRect.getIntersection(itemsArea);
 
                     // skip this item if totally clipped
                     if (itemClipper.getWidth() == 0)
                     {
-                        itemPos.x += itemSize.d_width;
+                        itemPos.d_x += itemSize.d_width;
                         continue;
                     }
 
-                    // Create render geometry for this item and add it to the Window
-                    auto geomBuffers = item->createRenderGeometry(itemRect, alpha, &itemClipper);
-
-                    w->appendGeometryBuffers(geomBuffers);
+                    // draw this item
+                    item->draw(w->getGeometryBuffer(), itemRect, alpha, &itemClipper);
                 }
 
                 // update position for next column.
-                itemPos.x += itemSize.d_width;
+                itemPos.d_x += itemSize.d_width;
             }
 
             // update position ready for next row
-            itemPos.y += itemSize.d_height;
+            itemPos.d_y += itemSize.d_height;
         }
     }
 
@@ -158,9 +156,8 @@ namespace CEGUI
         // get WidgetLookFeel for the assigned look.
         const WidgetLookFeel& wlf = getLookNFeel();
         // try and get imagery for our current state
-        imagery = &wlf.getStateImagery(d_window->isEffectiveDisabled() ? "Disabled"
-            : (d_window->isFocused() ? "EnabledFocused" : "Enabled"));
-        // perform the rendering operation.
+        imagery = &wlf.getStateImagery(d_window->isEffectiveDisabled() ? "Disabled" : "Enabled");
+        // peform the rendering operation.
         imagery->render(*d_window);
     }
 

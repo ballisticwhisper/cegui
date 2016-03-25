@@ -42,19 +42,19 @@ RenderingWindow::RenderingWindow(TextureTarget& target, RenderingSurface& owner)
     d_renderer(*System::getSingleton().getRenderer()),
     d_textarget(target),
     d_owner(&owner),
-    d_geometryBuffer(d_renderer.createGeometryBufferTextured()),
+    d_geometry(&d_renderer.createGeometryBuffer()),
     d_geometryValid(false),
     d_position(0, 0),
     d_size(0, 0),
-    d_rotation(1, 0, 0, 0) // <-- IDENTITY
+    d_rotation(Quaternion::IDENTITY)
 {
-    d_geometryBuffer.setBlendMode(BM_RTT_PREMULTIPLIED);
+    d_geometry->setBlendMode(BM_RTT_PREMULTIPLIED);
 }
 
 //----------------------------------------------------------------------------//
 RenderingWindow::~RenderingWindow()
 {
-    d_renderer.destroyGeometryBuffer(d_geometryBuffer);
+    d_renderer.destroyGeometryBuffer(*d_geometry);
 }
 
 //----------------------------------------------------------------------------//
@@ -66,26 +66,29 @@ void RenderingWindow::setClippingRegion(const Rectf& region)
     // that is a RenderingWindow.
     if (d_owner->isRenderingWindow())
     {
-        final_region.offset(-static_cast<RenderingWindow*>(d_owner)->d_position);
+        final_region.offset(
+            Vector2f(-static_cast<RenderingWindow*>(d_owner)->d_position.d_x,
+                      -static_cast<RenderingWindow*>(d_owner)->d_position.d_y));
     }
 
-    d_geometryBuffer.setClippingRegion(final_region);
+    d_geometry->setClippingRegion(final_region);
 }
 
 //----------------------------------------------------------------------------//
-void RenderingWindow::setPosition(const glm::vec2& position)
+void RenderingWindow::setPosition(const Vector2f& position)
 {
     d_position = position;
 
-    glm::vec3 trans(d_position, 0.0f);
+    Vector3f trans(d_position.d_x, d_position.d_y, 0.0f);
     // geometry position must be offset according to our owner position, if
     // that is a RenderingWindow.
     if (d_owner->isRenderingWindow())
     {
-        trans -= glm::vec3(static_cast<RenderingWindow*>(d_owner)->d_position, 0);
+        trans.d_x -= static_cast<RenderingWindow*>(d_owner)->d_position.d_x;
+        trans.d_y -= static_cast<RenderingWindow*>(d_owner)->d_position.d_y;
     }
 
-    d_geometryBuffer.setTranslation(trans);
+    d_geometry->setTranslation(trans);
 }
 
 //----------------------------------------------------------------------------//
@@ -101,21 +104,21 @@ void RenderingWindow::setSize(const Sizef& size)
 }
 
 //----------------------------------------------------------------------------//
-void RenderingWindow::setRotation(const glm::quat& rotation)
+void RenderingWindow::setRotation(const Quaternion& rotation)
 {
     d_rotation = rotation;
-    d_geometryBuffer.setRotation(d_rotation);
+    d_geometry->setRotation(d_rotation);
 }
 
 //----------------------------------------------------------------------------//
-void RenderingWindow::setPivot(const glm::vec3& pivot)
+void RenderingWindow::setPivot(const Vector3f& pivot)
 {
     d_pivot = pivot;
-    d_geometryBuffer.setPivot(d_pivot);
+    d_geometry->setPivot(d_pivot);
 }
 
 //----------------------------------------------------------------------------//
-const glm::vec2& RenderingWindow::getPosition() const
+const Vector2f& RenderingWindow::getPosition() const
 {
     return d_position;
 }
@@ -127,13 +130,13 @@ const Sizef& RenderingWindow::getSize() const
 }
 
 //----------------------------------------------------------------------------//
-const glm::quat& RenderingWindow::getRotation() const
+const Quaternion& RenderingWindow::getRotation() const
 {
     return d_rotation;
 }
 
 //----------------------------------------------------------------------------//
-const glm::vec3& RenderingWindow::getPivot() const
+const Vector3f& RenderingWindow::getPivot() const
 {
     return d_pivot;
 }
@@ -154,7 +157,7 @@ TextureTarget& RenderingWindow::getTextureTarget()
 //----------------------------------------------------------------------------//
 void RenderingWindow::update(const float elapsed)
 {
-    RenderEffect* effect = d_geometryBuffer.getRenderEffect();
+    RenderEffect* effect = d_geometry->getRenderEffect();
 
     if (effect)
         d_geometryValid &= effect->update(elapsed, *this);
@@ -163,13 +166,13 @@ void RenderingWindow::update(const float elapsed)
 //----------------------------------------------------------------------------//
 void RenderingWindow::setRenderEffect(RenderEffect* effect)
 {
-    d_geometryBuffer.setRenderEffect(effect);
+    d_geometry->setRenderEffect(effect);
 }
 
 //----------------------------------------------------------------------------//
 RenderEffect* RenderingWindow::getRenderEffect()
 {
-    return d_geometryBuffer.getRenderEffect();
+    return d_geometry->getRenderEffect();
 }
 
 //----------------------------------------------------------------------------//
@@ -207,7 +210,7 @@ void RenderingWindow::draw()
     }
 
     // add our geometry to our owner for rendering
-    d_owner->addGeometryBuffer(RQ_BASE, d_geometryBuffer);
+    d_owner->addGeometryBuffer(RQ_BASE, *d_geometry);
 }
 
 //----------------------------------------------------------------------------//
@@ -237,11 +240,11 @@ void RenderingWindow::realiseGeometry()
     if (d_geometryValid)
         return;
 
-    d_geometryBuffer.reset();
+    d_geometry->reset();
 
-    RenderEffect* effect = d_geometryBuffer.getRenderEffect();
+    RenderEffect* effect = d_geometry->getRenderEffect();
 
-    if (!effect || effect->realiseGeometry(*this, d_geometryBuffer))
+    if (!effect || effect->realiseGeometry(*this, *d_geometry))
         realiseGeometry_impl();
 
     d_geometryValid = true;
@@ -250,72 +253,71 @@ void RenderingWindow::realiseGeometry()
 //----------------------------------------------------------------------------//
 void RenderingWindow::realiseGeometry_impl()
 {
-    Texture& tex = d_textarget.getTexture();
-    
-    bool isTexCoordSysFlipped = d_textarget.getOwner().isTexCoordSystemFlipped();
+   Texture& tex = d_textarget.getTexture();
 
-    const float tu = d_size.d_width * tex.getTexelScaling().x;
-    const float tv = d_size.d_height * tex.getTexelScaling().y;
-    const Rectf tex_rect(isTexCoordSysFlipped ?
+    const float tu = d_size.d_width * tex.getTexelScaling().d_x;
+    const float tv = d_size.d_height * tex.getTexelScaling().d_y;
+    const Rectf tex_rect(d_textarget.isRenderingInverted() ?
                           Rectf(0, 1, tu, 1 - tv) :
                           Rectf(0, 0, tu, tv));
 
     const Rectf area(0, 0, d_size.d_width, d_size.d_height);
-    const glm::vec4 colour(1.0, 1.0, 1.0, 1.0);
-    TexturedColouredVertex vbuffer[6];
+    const Colour c(1, 1, 1, 1);
+    Vertex vbuffer[6];
 
     // vertex 0
-    vbuffer[0].d_position   = glm::vec3(area.d_min.x, area.d_min.y, 0.0f);
-    vbuffer[0].d_colour = colour;
-    vbuffer[0].d_texCoords = glm::vec2(tex_rect.d_min.x, tex_rect.d_min.y);
+    vbuffer[0].position   = Vector3f(area.d_min.d_x, area.d_min.d_y, 0.0f);
+    vbuffer[0].colour_val = c;
+    vbuffer[0].tex_coords = Vector2f(tex_rect.d_min.d_x, tex_rect.d_min.d_y);
 
     // vertex 1
-    vbuffer[1].d_position   = glm::vec3(area.d_min.x, area.d_max.y, 0.0f);
-    vbuffer[1].d_colour = colour;
-    vbuffer[1].d_texCoords = glm::vec2(tex_rect.d_min.x, tex_rect.d_max.y);
+    vbuffer[1].position   = Vector3f(area.d_min.d_x, area.d_max.d_y, 0.0f);
+    vbuffer[1].colour_val = c;
+    vbuffer[1].tex_coords = Vector2f(tex_rect.d_min.d_x, tex_rect.d_max.d_y);
 
     // vertex 2
-    vbuffer[2].d_position   = glm::vec3(area.d_max.x, area.d_max.y, 0.0f);
-    vbuffer[2].d_colour = colour;
-    vbuffer[2].d_texCoords = glm::vec2(tex_rect.d_max.x, tex_rect.d_max.y);
+    vbuffer[2].position   = Vector3f(area.d_max.d_x, area.d_max.d_y, 0.0f);
+    vbuffer[2].colour_val = c;
+    vbuffer[2].tex_coords = Vector2f(tex_rect.d_max.d_x, tex_rect.d_max.d_y);
 
     // vertex 3
-    vbuffer[3].d_position   = glm::vec3(area.d_max.x, area.d_min.y, 0.0f);
-    vbuffer[3].d_colour = colour;
-    vbuffer[3].d_texCoords = glm::vec2(tex_rect.d_max.x, tex_rect.d_min.y);
+    vbuffer[3].position   = Vector3f(area.d_max.d_x, area.d_min.d_y, 0.0f);
+    vbuffer[3].colour_val = c;
+    vbuffer[3].tex_coords = Vector2f(tex_rect.d_max.d_x, tex_rect.d_min.d_y);
 
     // vertex 4
-    vbuffer[4].d_position   = glm::vec3(area.d_min.x, area.d_min.y, 0.0f);
-    vbuffer[4].d_colour = colour;
-    vbuffer[4].d_texCoords = glm::vec2(tex_rect.d_min.x, tex_rect.d_min.y);
+    vbuffer[4].position   = Vector3f(area.d_min.d_x, area.d_min.d_y, 0.0f);
+    vbuffer[4].colour_val = c;
+    vbuffer[4].tex_coords = Vector2f(tex_rect.d_min.d_x, tex_rect.d_min.d_y);
 
     // vertex 5
-    vbuffer[5].d_position   = glm::vec3(area.d_max.x, area.d_max.y, 0.0f);
-    vbuffer[5].d_colour = colour;
-    vbuffer[5].d_texCoords = glm::vec2(tex_rect.d_max.x, tex_rect.d_max.y);
+    vbuffer[5].position   = Vector3f(area.d_max.d_x, area.d_max.d_y, 0.0f);
+    vbuffer[5].colour_val = c;
+    vbuffer[5].tex_coords = Vector2f(tex_rect.d_max.d_x, tex_rect.d_max.d_y);
 
-    d_geometryBuffer.setTexture("texture0", &tex);
-    d_geometryBuffer.appendGeometry(vbuffer, 6);
+    d_geometry->setActiveTexture(&tex);
+    d_geometry->appendGeometry(vbuffer, 6);
 }
 
 //----------------------------------------------------------------------------//
-void RenderingWindow::unprojectPoint(const glm::vec2& p_in, glm::vec2& p_out)
+void RenderingWindow::unprojectPoint(const Vector2f& p_in, Vector2f& p_out)
 {
     // quick test for rotations to save us a lot of work in the unrotated case
-    if (d_rotation == glm::quat(1, 0, 0, 0))
+    if ((d_rotation == Quaternion::IDENTITY))
     {
         p_out = p_in;
         return;
     }
 
-    glm::vec2 in(p_in);
+    Vector2f in(p_in);
 
     // localise point for cases where owner is also a RenderingWindow
     if (d_owner->isRenderingWindow())
         in -= static_cast<RenderingWindow*>(d_owner)->getPosition();
 
-    d_owner->getRenderTarget().unprojectPoint(d_geometryBuffer, in, p_out);
-    p_out += d_position;
+    d_owner->getRenderTarget().unprojectPoint(*d_geometry, in, p_out);
+    p_out.d_x += d_position.d_x;
+    p_out.d_y += d_position.d_y;
 }
 
 //----------------------------------------------------------------------------//

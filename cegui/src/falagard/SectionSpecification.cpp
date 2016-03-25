@@ -37,6 +37,9 @@
 // Start of CEGUI namespace section
 namespace CEGUI
 {
+    // This is deprecated and declared as an extern in PropertyLinkDefinition.h
+    const String S_parentIdentifier("__parent__");
+
     SectionSpecification::SectionSpecification() :
         d_usingColourOverride(false)
     {}
@@ -78,7 +81,7 @@ namespace CEGUI
         if (!shouldBeDrawn(srcWindow))
             return;
 
-        try
+        CEGUI_TRY
         {
             // get the imagery section object with the name we're set up to use
             const ImagerySection* sect =
@@ -87,6 +90,7 @@ namespace CEGUI
             // decide what colours are to be used
             ColourRect finalColours;
             initColourRectForOverride(srcWindow, finalColours);
+            finalColours.modulateAlpha(srcWindow.getEffectiveAlpha());
 
             if (modcols)
                 finalColours *= *modcols;
@@ -95,7 +99,7 @@ namespace CEGUI
             sect->render(srcWindow, &finalColours, clipper, clipToDisplay);
         }
         // do nothing here, errors are non-faltal and are logged for debugging purposes.
-        catch (Exception&)
+        CEGUI_CATCH (Exception&)
         {}
     }
 
@@ -108,7 +112,7 @@ namespace CEGUI
         if (!shouldBeDrawn(srcWindow))
             return;
 
-        try
+        CEGUI_TRY
         {
             // get the imagery section object with the name we're set up to use
             const ImagerySection* sect =
@@ -117,6 +121,7 @@ namespace CEGUI
             // decide what colours are to be used
             ColourRect finalColours;
             initColourRectForOverride(srcWindow, finalColours);
+            finalColours.modulateAlpha(srcWindow.getEffectiveAlpha());
 
             if (modcols)
                 finalColours *= *modcols;
@@ -125,7 +130,7 @@ namespace CEGUI
             sect->render(srcWindow, baseRect, &finalColours, clipper, clipToDisplay);
         }
         // do nothing here, errors are non-faltal and are logged for debugging purposes.
-        catch (Exception&)
+        CEGUI_CATCH (Exception&)
         {}
     }
 

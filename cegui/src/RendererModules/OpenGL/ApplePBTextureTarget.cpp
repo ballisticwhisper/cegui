@@ -50,45 +50,45 @@ static CGLPixelFormatAttribute fmtAttrs[] =
 };
 
 //----------------------------------------------------------------------------//
-OpenGLApplePBTextureTarget::OpenGLApplePBTextureTarget(OpenGLRendererBase& owner, bool addStencilBuffer) :
-    OpenGLTextureTarget(owner, addStencilBuffer),
+OpenGLApplePBTextureTarget::OpenGLApplePBTextureTarget(OpenGLRendererBase& owner) :
+    OpenGLTextureTarget(owner),
     d_pbuffer(0),
     d_context(0)
 {
     if (!GLEW_APPLE_pixel_buffer)
-        throw RendererException("GL_APPLE_pixel_buffer extension is "
-            "needed to use OpenGLApplePBTextureTarget!");
+        CEGUI_THROW(RendererException("GL_APPLE_pixel_buffer extension is "
+            "needed to use OpenGLApplePBTextureTarget!"));
 
     initialiseTexture();
 
     CGLError err;
     CGLContextObj cctx = CGLGetCurrentContext();
     if (err = CGLGetVirtualScreen(cctx, &d_screen))
-        throw RendererException(
-            "CGLGetVirtualScreen failed: " + String(CGLErrorString(err)));
+        CEGUI_THROW(RendererException(
+            "CGLGetVirtualScreen failed: " + String(CGLErrorString(err))));
 
     GLint fmt_count;
     CGLPixelFormatObj pix_fmt;
     if (err = CGLChoosePixelFormat(fmtAttrs, &pix_fmt, &fmt_count))
-        throw RendererException(
-            "CGLChoosePixelFormat failed: " + String(CGLErrorString(err)));
+        CEGUI_THROW(RendererException(
+            "CGLChoosePixelFormat failed: " + String(CGLErrorString(err))));
 
     err = CGLCreateContext(pix_fmt, cctx, &d_context);
     CGLDestroyPixelFormat(pix_fmt);
 
     if (err)
-        throw RendererException(
-            "CGLCreateContext failed: " + String(CGLErrorString(err)));
+        CEGUI_THROW(RendererException(
+            "CGLCreateContext failed: " + String(CGLErrorString(err))));
 
     // set default size (and cause initialisation of the pbuffer)
-    try
+    CEGUI_TRY
     {
         declareRenderSize(Sizef(DEFAULT_SIZE, DEFAULT_SIZE));
     }
-    catch (...)
+    CEGUI_CATCH(...)
     {
         CGLDestroyContext(d_context);
-        throw;
+        CEGUI_RETHROW;
     }
 
     // set these states one-time since we have our own context
@@ -175,13 +175,13 @@ void OpenGLApplePBTextureTarget::declareRenderSize(const Sizef& sz)
     if (err = CGLCreatePBuffer(d_area.getWidth(), d_area.getHeight(),
                                 GL_TEXTURE_2D, GL_RGBA, 0, &d_pbuffer))
     {
-        throw RendererException(
-            "CGLCreatePBuffer failed: " + String(CGLErrorString(err)));
+        CEGUI_THROW(RendererException(
+            "CGLCreatePBuffer failed: " + String(CGLErrorString(err))));
     }
 
     if (err = CGLSetPBuffer(d_context, d_pbuffer, 0, 0, d_screen))
-        throw RendererException(
-            "CGLSetPBuffer failed: " + String(CGLErrorString(err)));
+        CEGUI_THROW(RendererException(
+            "CGLSetPBuffer failed: " + String(CGLErrorString(err))));
 
     clear();
 
@@ -197,8 +197,8 @@ void OpenGLApplePBTextureTarget::declareRenderSize(const Sizef& sz)
     glBindTexture(GL_TEXTURE_2D, old_tex);
 
     if (err)
-        throw RendererException(
-            "CGLTexImagePBuffer failed: " + String(CGLErrorString(err)));
+        CEGUI_THROW(RendererException(
+            "CGLTexImagePBuffer failed: " + String(CGLErrorString(err))));
 
     // ensure CEGUI::Texture is wrapping real GL texture and has correct size
     d_CEGUITexture->setOpenGLTexture(d_texture, d_area.getSize());

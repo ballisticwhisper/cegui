@@ -40,7 +40,8 @@
 // Start of CEGUI namespace section
 namespace CEGUI
 {
-class CEGUIEXPORT EventLinkDefinition
+class CEGUIEXPORT EventLinkDefinition :
+    public AllocatedObject<EventLinkDefinition>
 {
 public:
     EventLinkDefinition(const String& event_name);
@@ -72,7 +73,7 @@ protected:
 
     typedef std::pair<String,String> StringPair;
     //! type used for the collection of target events.
-    typedef std::vector<StringPair> LinkTargetCollection;
+    typedef std::vector<StringPair CEGUI_VECTOR_ALLOC(StringPair)> LinkTargetCollection;
 
     //! collection of targets for this EventLinkDefinition.
     LinkTargetCollection d_targets;

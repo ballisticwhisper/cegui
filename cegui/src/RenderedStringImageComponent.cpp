@@ -28,7 +28,6 @@
 #include "CEGUI/ImageManager.h"
 #include "CEGUI/Image.h"
 #include "CEGUI/Exceptions.h"
-#include "CEGUI/System.h"
 
 // Start of CEGUI namespace section
 namespace CEGUI
@@ -112,31 +111,29 @@ void RenderedStringImageComponent::setSelection(const Window* /*ref_wnd*/,
 }
 
 //----------------------------------------------------------------------------//
-std::vector<GeometryBuffer*> RenderedStringImageComponent::createRenderGeometry(
-    const Window* ref_wnd,
-    const glm::vec2& position,
-    const ColourRect* mod_colours,
-    const Rectf* clip_rect,
-    const float vertical_space,
-    const float /*space_extra*/) const
+void RenderedStringImageComponent::draw(const Window* ref_wnd,
+                                        GeometryBuffer& buffer,
+                                        const Vector2f& position,
+                                        const ColourRect* mod_colours,
+                                        const Rectf* clip_rect,
+                                        const float vertical_space,
+                                        const float /*space_extra*/) const
 {
     if (!d_image)
-    {
-        return std::vector<GeometryBuffer*>();
-    }
+        return;
 
-    Rectf dest(position.x, position.y, 0, 0);
+    CEGUI::Rectf dest(position.d_x, position.d_y, 0, 0);
     float y_scale = 1.0f;
 
     // handle formatting options
     switch (d_verticalFormatting)
     {
     case VF_BOTTOM_ALIGNED:
-        dest.d_min.y += vertical_space - getPixelSize(ref_wnd).d_height;
+        dest.d_min.d_y += vertical_space - getPixelSize(ref_wnd).d_height;
         break;
 
     case VF_CENTRE_ALIGNED:
-        dest.d_min.y += (vertical_space - getPixelSize(ref_wnd).d_height) / 2 ;
+        dest.d_min.d_y += (vertical_space - getPixelSize(ref_wnd).d_height) / 2 ;
         break;
 
     case VF_STRETCHED:
@@ -148,8 +145,8 @@ std::vector<GeometryBuffer*> RenderedStringImageComponent::createRenderGeometry(
         break;
 
     default:
-        throw InvalidRequestException(
-            "unknown VerticalFormatting option specified.");
+        CEGUI_THROW(InvalidRequestException(
+            "unknown VerticalFormatting option specified."));
     }
 
     Sizef sz(d_image->getRenderedSize());
@@ -168,13 +165,7 @@ std::vector<GeometryBuffer*> RenderedStringImageComponent::createRenderGeometry(
     if (d_selectionImage && d_selected)
     {
         const Rectf select_area(position, getPixelSize(ref_wnd));
-
-        ImageRenderSettings imgRenderSettings(
-            select_area, clip_rect, true, ColourRect(0xFF002FFF));
-
-        auto geomBuffers = d_selectionImage->createRenderGeometry(imgRenderSettings);
-
-        geomBuffers.insert(geomBuffers.end(), geomBuffers.begin(), geomBuffers.end());
+        d_selectionImage->render(buffer, select_area, clip_rect, ColourRect(0xFF002FFF));
     }
 
     // apply modulative colours if needed.
@@ -182,14 +173,8 @@ std::vector<GeometryBuffer*> RenderedStringImageComponent::createRenderGeometry(
     if (mod_colours)
         final_cols *= *mod_colours;
 
-    // Create the render geometry for the image
-    ImageRenderSettings imgRenderSettings(
-        dest, clip_rect, true, final_cols);
-
-    std::vector<GeometryBuffer*> imageGeomBuffers =
-        d_image->createRenderGeometry(imgRenderSettings);
-
-    return imageGeomBuffers;
+    // draw the image.
+    d_image->render(buffer, dest, clip_rect, final_cols);
 }
 
 //----------------------------------------------------------------------------//
@@ -204,8 +189,8 @@ Sizef RenderedStringImageComponent::getPixelSize(const Window* /*ref_wnd*/) cons
             sz.d_width = d_size.d_width;
         if (d_size.d_height != 0.0)
             sz.d_height = d_size.d_height;
-        sz.d_width += (d_padding.d_min.x + d_padding.d_max.x);
-        sz.d_height += (d_padding.d_min.y + d_padding.d_max.y);
+        sz.d_width += (d_padding.d_min.d_x + d_padding.d_max.d_x);
+        sz.d_height += (d_padding.d_min.d_y + d_padding.d_max.d_y);
     }
 
     return sz;
@@ -219,17 +204,16 @@ bool RenderedStringImageComponent::canSplit() const
 
 //----------------------------------------------------------------------------//
 RenderedStringImageComponent* RenderedStringImageComponent::split(
-    const Window* /*ref_wnd*/ ,float /*split_point*/, bool /*first_component*/,
-    bool& /*was_word_split*/)
+    const Window* /*ref_wnd*/ ,float /*split_point*/, bool /*first_component*/)
 {
-    throw InvalidRequestException(
-        "this component does not support being split.");
+    CEGUI_THROW(InvalidRequestException(
+        "this component does not support being split."));
 }
 
 //----------------------------------------------------------------------------//
 RenderedStringImageComponent* RenderedStringImageComponent::clone() const
 {
-    return new RenderedStringImageComponent(*this);
+    return CEGUI_NEW_AO RenderedStringImageComponent(*this);
 }
 
 //----------------------------------------------------------------------------//

@@ -68,18 +68,6 @@ bool BaseDim::handleFontRenderSizeChange(Window& /*window*/,
     return false;
 }
 
-//----------------------------------------------------------------------------//
-UDim BaseDim::getLowerBoundAsUDim(const Window& wnd, DimensionType /*type*/) const
-{
-    return UDim(0.f, getValue(wnd));
-}
-
-//----------------------------------------------------------------------------//
-UDim BaseDim::getUpperBoundAsUDim(const Window& wnd, DimensionType /*type*/) const
-{
-    return UDim(0.f, getValue(wnd));
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 
 //----------------------------------------------------------------------------//
@@ -109,14 +97,14 @@ OperatorDim::OperatorDim(DimensionOperator op, BaseDim* left, BaseDim* right) :
 //----------------------------------------------------------------------------//
 OperatorDim::~OperatorDim()
 {
-    delete d_right;
-    delete d_left;
+    CEGUI_DELETE_AO d_right;
+    CEGUI_DELETE_AO d_left;
 }
 
 //----------------------------------------------------------------------------//
 void OperatorDim::setLeftOperand(const BaseDim* operand)
 {
-    delete d_left;
+    CEGUI_DELETE_AO d_left;
     
     d_left = operand ? operand->clone() : 0;
 }
@@ -130,7 +118,7 @@ BaseDim* OperatorDim::getLeftOperand() const
 //----------------------------------------------------------------------------//
 void OperatorDim::setRightOperand(const BaseDim* operand)
 {
-    delete d_right;
+    CEGUI_DELETE_AO d_right;
     
     d_right = operand ? operand->clone() : 0;
 }
@@ -161,8 +149,8 @@ void OperatorDim::setNextOperand(const BaseDim* operand)
     else if (!d_right)
         d_right = operand ? operand->clone() : 0;
     else
-        throw InvalidRequestException(
-            "Both operands are already set.");
+        CEGUI_THROW(InvalidRequestException(
+            "Both operands are already set."));
 }
 
 //----------------------------------------------------------------------------//
@@ -206,29 +194,15 @@ float OperatorDim::getValueImpl(const float lval, const float rval) const
         return rval == 0.0f ? rval : lval / rval;
 
     default:
-        throw InvalidRequestException(
-            "Unknown DimensionOperator value.");
+        CEGUI_THROW(InvalidRequestException(
+            "Unknown DimensionOperator value."));
     }
 }
 
 //----------------------------------------------------------------------------//
 BaseDim* OperatorDim::clone() const
 {
-    return new OperatorDim(d_op, d_left, d_right);
-}
-
-//----------------------------------------------------------------------------//
-UDim OperatorDim::getLowerBoundAsUDim(const Window& wnd, DimensionType type) const
-{
-    return getBoundAsUDim(d_left->getLowerBoundAsUDim(wnd, type),
-                          d_right->getLowerBoundAsUDim(wnd, type));
-}
-
-//----------------------------------------------------------------------------//
-UDim OperatorDim::getUpperBoundAsUDim(const Window& wnd, DimensionType type) const
-{
-    return getBoundAsUDim(d_left->getUpperBoundAsUDim(wnd, type),
-                          d_right->getUpperBoundAsUDim(wnd, type));
+    return CEGUI_NEW_AO OperatorDim(d_op, d_left, d_right);
 }
 
 //----------------------------------------------------------------------------//
@@ -257,53 +231,6 @@ void OperatorDim::writeXMLElementAttributes_impl(XMLSerializer& xml_stream) cons
 {
     xml_stream.attribute(
         Falagard_xmlHandler::OperatorAttribute, FalagardXMLHelper<DimensionOperator>::toString(d_op));
-}
-
-/*----------------------------------------------------------------------------//
-    Used by "getLowerBoundAsUDim" and "getUpperBoundAsUDim" to get a lower/upper
-    bound for this dimension as an affine function of "type".
-
-    It does so by applying the operator "d_op" on "lval" (the bound for
-    "d_left") and "rval" (the bound for "d_right").
-------------------------------------------------------------------------------*/
-UDim OperatorDim::getBoundAsUDim(const UDim& lval, const UDim& rval) const
-{
-    if (d_op == DOP_NOOP)
-        return UDim::zero();
-    else
-    {
-        switch (d_op)
-        {
-        case DOP_ADD:
-            return lval +rval;
-        case DOP_SUBTRACT:
-            return lval -rval;
-        case DOP_MULTIPLY:
-            if      (rval.d_scale == 0.f)
-                return lval *rval.d_offset;
-            else if (lval.d_scale == 0.f)
-                return rval *lval.d_offset;
-            else
-                throw InvalidRequestException("Multiplication gives a non-affine function");
-        case DOP_DIVIDE:
-            if(rval.d_scale == 0.f)
-            {
-                if (rval.d_offset == 0.f)
-                    throw InvalidRequestException("Division by 0.");
-                return lval /rval.d_offset;
-            }
-            else if (lval.d_scale == 0.f)
-            {
-                if (lval.d_offset == 0.f)
-                    throw InvalidRequestException("Division by 0.");
-                return rval /lval.d_offset;
-            }
-            else
-                throw InvalidRequestException("Division gives a non-affine function");
-        default:
-            throw InvalidRequestException("Unknown DimensionOperator value.");
-        }
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -340,7 +267,7 @@ float AbsoluteDim::getValue(const Window&, const Rectf&) const
 //----------------------------------------------------------------------------//
 BaseDim* AbsoluteDim::clone() const
 {
-    return new AbsoluteDim(*this);
+    return CEGUI_NEW_AO AbsoluteDim(*this);
 }
 
 //----------------------------------------------------------------------------//
@@ -394,16 +321,16 @@ float ImageDimBase::getValue(const Window& wnd) const
             break;
 
         case DT_X_OFFSET:
-            return img->getRenderedOffset().x;
+            return img->getRenderedOffset().d_x;
             break;
 
         case DT_Y_OFFSET:
-            return img->getRenderedOffset().y;
+            return img->getRenderedOffset().d_y;
             break;
 
         default:
-            throw InvalidRequestException(
-                "unknown or unsupported DimensionType encountered.");
+            CEGUI_THROW(InvalidRequestException(
+                "unknown or unsupported DimensionType encountered."));
             break;
     }
 }
@@ -452,7 +379,7 @@ const Image* ImageDim::getSourceImage(const Window& /*wnd*/) const
 //----------------------------------------------------------------------------//
 BaseDim* ImageDim::clone() const
 {
-    return new ImageDim(*this);
+    return CEGUI_NEW_AO ImageDim(*this);
 }
 
 //----------------------------------------------------------------------------//
@@ -500,7 +427,7 @@ const Image* ImagePropertyDim::getSourceImage(const Window& wnd) const
 //----------------------------------------------------------------------------//
 BaseDim* ImagePropertyDim::clone() const
 {
-    return new ImagePropertyDim(*this);
+    return CEGUI_NEW_AO ImagePropertyDim(*this);
 }
 
 //----------------------------------------------------------------------------//
@@ -521,7 +448,7 @@ void ImagePropertyDim::writeXMLElementAttributes_impl(XMLSerializer& xml_stream)
 //----------------------------------------------------------------------------//
 WidgetDim::WidgetDim(const String& name, DimensionType dim) :
     d_widgetName(name),
-    d_dimensionType(dim)
+    d_what(dim)
 {}
 
 //----------------------------------------------------------------------------//
@@ -539,13 +466,13 @@ void WidgetDim::setWidgetName(const String& name)
 //----------------------------------------------------------------------------//
 DimensionType WidgetDim::getSourceDimension() const
 {
-    return d_dimensionType;
+    return d_what;
 }
 
 //----------------------------------------------------------------------------//
 void WidgetDim::setSourceDimension(DimensionType dim)
 {
-    d_dimensionType = dim;
+    d_what = dim;
 }
 
 //----------------------------------------------------------------------------//
@@ -561,17 +488,13 @@ float WidgetDim::getValue(const Window& wnd) const
     // name not empty, so find window with required name
     else
     {
-        if (wnd.isChild(d_widgetName))
-            widget = wnd.getChild(d_widgetName);
-        else
-            throw InvalidRequestException(
-                "A WidgetDim in window \"" + wnd.getName() + "\" requested window \"" + d_widgetName + "\" as WidgetDim-source, but this is not a child of the window");
+        widget = wnd.getChild(d_widgetName);
     }
 
     // get size of parent; required to extract pixel values
     Sizef parentSize(widget->getParentPixelSize());
 
-    switch (d_dimensionType)
+    switch (d_what)
     {
         case DT_WIDTH:
             return widget->getPixelSize().d_width;
@@ -610,8 +533,8 @@ float WidgetDim::getValue(const Window& wnd) const
             break;
 
         default:
-            throw InvalidRequestException(
-                "unknown or unsupported DimensionType encountered.");
+            CEGUI_THROW(InvalidRequestException(
+                "unknown or unsupported DimensionType encountered."));
             break;
     }
 }
@@ -619,14 +542,14 @@ float WidgetDim::getValue(const Window& wnd) const
 //----------------------------------------------------------------------------//
 float WidgetDim::getValue(const Window& wnd, const Rectf&) const
 {
-    // This dimension type does not alter when within a container Rect.
+    // This dimension type does not alter when whithin a container Rect.
     return getValue(wnd);
 }
 
 //----------------------------------------------------------------------------//
 BaseDim* WidgetDim::clone() const
 {
-    return new WidgetDim(*this);
+    return CEGUI_NEW_AO WidgetDim(*this);
 }
 
 //----------------------------------------------------------------------------//
@@ -641,7 +564,7 @@ void WidgetDim::writeXMLElementAttributes_impl(XMLSerializer& xml_stream) const
     if (!d_widgetName.empty())
         xml_stream.attribute(Falagard_xmlHandler::WidgetAttribute, d_widgetName);
 
-    xml_stream.attribute(Falagard_xmlHandler::DimensionAttribute, FalagardXMLHelper<DimensionType>::toString(d_dimensionType));
+    xml_stream.attribute(Falagard_xmlHandler::DimensionAttribute, FalagardXMLHelper<DimensionType>::toString(d_what));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -739,8 +662,8 @@ float FontDim::getValue(const Window& wnd) const
                 return fontObj->getTextExtent(d_text.empty() ? sourceWindow.getText() : d_text) + d_padding;
                 break;
             default:
-                throw InvalidRequestException(
-                    "unknown or unsupported FontMetricType encountered.");
+                CEGUI_THROW(InvalidRequestException(
+                    "unknown or unsupported FontMetricType encountered."));
                 break;
         }
     }
@@ -767,7 +690,7 @@ float FontDim::getValue(const Window& wnd, const Rectf&) const
 //----------------------------------------------------------------------------//
 BaseDim* FontDim::clone() const
 {
-    return new FontDim(*this);
+    return CEGUI_NEW_AO FontDim(*this);
 }
 
 //----------------------------------------------------------------------------//
@@ -877,8 +800,8 @@ float PropertyDim::getValue(const Window& wnd) const
             return CoordConverter::asAbsolute(d, s.d_height);
 
         default:
-            throw InvalidRequestException(
-                "unknown or unsupported DimensionType encountered.");
+            CEGUI_THROW(InvalidRequestException(
+                "unknown or unsupported DimensionType encountered."));
     }
 }
 
@@ -891,7 +814,7 @@ float PropertyDim::getValue(const Window& wnd, const Rectf&) const
 //----------------------------------------------------------------------------//
 BaseDim* PropertyDim::clone() const
 {
-    return new PropertyDim(*this);
+    return CEGUI_NEW_AO PropertyDim(*this);
 }
 
 //----------------------------------------------------------------------------//
@@ -923,7 +846,7 @@ Dimension::Dimension()
 Dimension::~Dimension()
 {
     if (d_value)
-        delete d_value;
+        CEGUI_DELETE_AO d_value;
 }
 
 //----------------------------------------------------------------------------//
@@ -945,7 +868,7 @@ Dimension& Dimension::operator=(const Dimension& other)
 {
     // release old value, if any.
     if (d_value)
-        delete d_value;
+        CEGUI_DELETE_AO d_value;
 
     d_value = other.d_value ? other.d_value->clone() : 0;
     d_type = other.d_type;
@@ -965,7 +888,7 @@ void Dimension::setBaseDimension(const BaseDim& dim)
 {
     // release old value, if any.
     if (d_value)
-        delete d_value;
+        CEGUI_DELETE_AO d_value;
 
     d_value = dim.clone();
 }
@@ -1056,8 +979,8 @@ float UnifiedDim::getValue(const Window& wnd) const
             break;
 
         default:
-            throw InvalidRequestException(
-                "unknown or unsupported DimensionType encountered.");
+            CEGUI_THROW(InvalidRequestException(
+                "unknown or unsupported DimensionType encountered."));
             break;
     }
 }
@@ -1084,8 +1007,8 @@ float UnifiedDim::getValue(const Window&, const Rectf& container) const
             break;
 
         default:
-            throw InvalidRequestException(
-                "unknown or unsupported DimensionType encountered.");
+            CEGUI_THROW(InvalidRequestException(
+                "unknown or unsupported DimensionType encountered."));
             break;
     }
 }
@@ -1093,52 +1016,8 @@ float UnifiedDim::getValue(const Window&, const Rectf& container) const
 //----------------------------------------------------------------------------//
 BaseDim* UnifiedDim::clone() const
 {
-    UnifiedDim* ndim = new UnifiedDim(d_value, d_what);
+    UnifiedDim* ndim = CEGUI_NEW_AO UnifiedDim(d_value, d_what);
     return ndim;
-}
-
-//----------------------------------------------------------------------------//
-UDim UnifiedDim::getBoundAsUDim(const Window& wnd, DimensionType type, float round_err) const
-{
-    switch (d_what)
-    {
-        case DT_LEFT_EDGE:
-        case DT_RIGHT_EDGE:
-        case DT_X_POSITION:
-        case DT_X_OFFSET:
-        case DT_WIDTH:
-            return      type == DT_WIDTH
-                   ?    UDim(d_value.d_scale, d_value.d_offset +round_err)
-                   :    UDim(0.f, getValue(wnd));
-        case DT_TOP_EDGE:
-        case DT_BOTTOM_EDGE:
-        case DT_Y_POSITION:
-        case DT_Y_OFFSET:
-        case DT_HEIGHT:
-            return      type == DT_HEIGHT
-                   ?    UDim(d_value.d_scale, d_value.d_offset +round_err)
-                   :    UDim(0.f, getValue(wnd));
-        default:
-            throw InvalidRequestException("unknown or unsupported DimensionType encountered.");
-    }
-}
-
-//----------------------------------------------------------------------------//
-UDim UnifiedDim::getLowerBoundAsUDim(const Window& wnd, DimensionType type) const
-{
-    /* "getValue" calls "CoordConverter::asAbsolute", which rounds the value.
-        The rounding may decrease the value by up to 1/2, therefore we substruct
-        "1/2". */
-    return getBoundAsUDim(wnd, type, -1.f/2.f);
-}
-
-//----------------------------------------------------------------------------//
-UDim UnifiedDim::getUpperBoundAsUDim(const Window& wnd, DimensionType type) const
-{
-    /* "getValue" calls "CoordConverter::asAbsolute", which rounds the value.
-        The rounding may increase the value by up to 1/2, therefore we add
-        "1/2". */
-    return getBoundAsUDim(wnd, type, +1.f/2.f);
 }
 
 //----------------------------------------------------------------------------//
@@ -1315,7 +1194,7 @@ const String& ComponentArea::getNamedAreaSourceLook() const
 }
 
 //----------------------------------------------------------------------------//
-void ComponentArea::setNamedAreaSource(const String& widget_look,
+void ComponentArea::setNamedAreaSouce(const String& widget_look,
                                       const String& area_name)
 {
     d_namedSource = area_name;
@@ -1349,36 +1228,6 @@ bool ComponentArea::handleFontRenderSizeChange(Window& window,
     result |= d_bottom_or_height.handleFontRenderSizeChange(window, font);
 
     return result;
-}
-
-//----------------------------------------------------------------------------//
-UDim ComponentArea::getWidthLowerBoundAsFuncOfWindowWidth(const Window& wnd) const
-{
-    switch (d_right_or_width.getDimensionType())
-    {
-    case DT_RIGHT_EDGE:
-        return d_right_or_width.getBaseDimension() .getLowerBoundAsUDim(wnd, DT_WIDTH) -
-               d_top.getBaseDimension().getUpperBoundAsUDim(wnd, DT_WIDTH);
-    case DT_WIDTH:
-        return d_right_or_width.getBaseDimension().getLowerBoundAsUDim(wnd, DT_WIDTH);
-    default:
-        throw InvalidRequestException("Invalid or unsupported dimension type.");
-    }
-}
-
-//----------------------------------------------------------------------------//
-UDim ComponentArea::getHeightLowerBoundAsFuncOfWindowHeight(const Window& wnd) const
-{
-    switch (d_bottom_or_height.getDimensionType())
-    {
-    case DT_BOTTOM_EDGE:
-        return d_bottom_or_height.getBaseDimension().getLowerBoundAsUDim(wnd, DT_HEIGHT) -
-               d_top.getBaseDimension().getUpperBoundAsUDim(wnd, DT_HEIGHT);
-    case DT_HEIGHT:
-        return d_bottom_or_height.getBaseDimension().getLowerBoundAsUDim(wnd, DT_HEIGHT);
-    default:
-        throw InvalidRequestException("Invalid or unsupported dimension type.");
-    }
 }
 
 //----------------------------------------------------------------------------//

@@ -45,7 +45,7 @@ ToggleButton::ToggleButton(const String& type, const String& name) :
 void ToggleButton::addToggleButtonProperties()
 {
     const String& propertyOrigin(WidgetTypeName);
-
+    
     CEGUI_DEFINE_PROPERTY(ToggleButton, bool,
         "Selected",
         "Property to access the selected state of the ToggleButton. "
@@ -74,16 +74,16 @@ void ToggleButton::onSelectStateChange(WindowEventArgs& e)
 }
 
 //----------------------------------------------------------------------------//
-void ToggleButton::onCursorActivate(CursorInputEventArgs& e)
+void ToggleButton::onMouseButtonUp(MouseEventArgs& e)
 {
-    if (e.source == CIS_Left && isPushed())
+    if (e.button == LeftButton && isPushed())
     {
         if (const Window* const sheet = getGUIContext().getRootWindow())
         {
-            // was cursor released over this widget
-            // (use cursor position, as e.position is already unprojected)
+            // was mouse released over this widget
+            // (use mouse position, as e.position is already unprojected)
             if (this == sheet->getTargetChildAtPosition(
-                    getGUIContext().getCursor().getPosition()))
+                    getGUIContext().getMouseCursor().getPosition()))
             {
                 setSelected(getPostClickSelectState());
             }
@@ -92,27 +92,13 @@ void ToggleButton::onCursorActivate(CursorInputEventArgs& e)
         ++e.handled;
     }
 
-    ButtonBase::onCursorActivate(e);
+    ButtonBase::onMouseButtonUp(e);
 }
 
 //----------------------------------------------------------------------------//
 bool ToggleButton::getPostClickSelectState() const
 {
     return d_selected ^ true;
-}
-
-//----------------------------------------------------------------------------//
-void ToggleButton::onSemanticInputEvent(SemanticEventArgs& e)
-{
-    if (isDisabled())
-        return;
-
-    if (e.d_semanticValue == SV_Confirm)
-    {
-        setSelected(getPostClickSelectState());
-
-        ++e.handled;
-    }
 }
 
 //----------------------------------------------------------------------------//

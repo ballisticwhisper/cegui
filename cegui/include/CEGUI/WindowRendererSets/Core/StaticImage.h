@@ -80,7 +80,7 @@ namespace CEGUI
         */
         const Image* getImage(void) const   {return d_image;}
 
-        void createRenderGeometry() override;
+        void render();
 
     protected:
         // implementation data

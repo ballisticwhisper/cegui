@@ -99,8 +99,8 @@ OpenGLESRenderer& OpenGLESRenderer::bootstrapSystem(
     System::performVersionTest(CEGUI_VERSION_ABI, abi, CEGUI_FUNCTION_NAME);
 
     if (System::getSingletonPtr())
-        throw InvalidRequestException(
-            "CEGUI::System object is already initialised.");
+        CEGUI_THROW(InvalidRequestException(
+            "CEGUI::System object is already initialised."));
 
     OpenGLESRenderer& renderer(create(tt_type));
     DefaultResourceProvider* rp = new CEGUI::DefaultResourceProvider();
@@ -118,8 +118,8 @@ OpenGLESRenderer& OpenGLESRenderer::bootstrapSystem(
     System::performVersionTest(CEGUI_VERSION_ABI, abi, CEGUI_FUNCTION_NAME);
 
     if (System::getSingletonPtr())
-        throw InvalidRequestException(
-            "CEGUI::System object is already initialised.");
+        CEGUI_THROW(InvalidRequestException(
+            "CEGUI::System object is already initialised."));
 
     OpenGLESRenderer& renderer(create(display_size, tt_type));
     DefaultResourceProvider* rp = new CEGUI::DefaultResourceProvider();
@@ -133,8 +133,8 @@ void OpenGLESRenderer::destroySystem()
 {
     System* sys;
     if (!(sys = System::getSingletonPtr()))
-        throw InvalidRequestException(
-            "CEGUI::System object is not created or was already destroyed.");
+        CEGUI_THROW(InvalidRequestException(
+            "CEGUI::System object is not created or was already destroyed."));
 
     OpenGLESRenderer* renderer = 
         static_cast<OpenGLESRenderer*>(sys->getRenderer());
@@ -284,9 +284,9 @@ void OpenGLESRenderer::destroyAllGeometryBuffers()
 }
 
 //----------------------------------------------------------------------------//
-TextureTarget* OpenGLESRenderer::createTextureTarget(bool addStencilBuffer)
+TextureTarget* OpenGLESRenderer::createTextureTarget()
 {
-    TextureTarget* t = d_textureTargetFactory->create(*this, addStencilBuffer);
+    TextureTarget* t = d_textureTargetFactory->create(*this);
     d_textureTargets.push_back(t);
     return t;
 }
@@ -379,8 +379,8 @@ Texture& OpenGLESRenderer::getTexture(const String& name) const
     TextureMap::const_iterator i = d_textures.find(name);
     
     if (i == d_textures.end())
-        throw UnknownObjectException(
-            "No texture named '" + name + "' is available.");
+        CEGUI_THROW(UnknownObjectException(
+            "No texture named '" + name + "' is available."));
 
     return *i->second;
 }
@@ -477,13 +477,13 @@ const Sizef& OpenGLESRenderer::getDisplaySize() const
 }
 
 //----------------------------------------------------------------------------//
-const glm::vec2& OpenGLESRenderer::getDisplayDPI() const
+const Vector2f& OpenGLESRenderer::getDisplayDPI() const
 {
     return d_displayDPI;
 }
 
 //----------------------------------------------------------------------------//
-unsigned int OpenGLESRenderer::getMaxTextureSize() const
+uint OpenGLESRenderer::getMaxTextureSize() const
 {
     return d_maxTextureSize;
 }
@@ -604,7 +604,7 @@ Sizef OpenGLESRenderer::getAdjustedTextureSize(const Sizef& sz) const
 //----------------------------------------------------------------------------//
 float OpenGLESRenderer::getNextPOTSize(const float f)
 {
-    unsigned int size = static_cast<unsigned int>(f);
+    uint size = static_cast<uint>(f);
 
     // if not power of 2
     if ((size & (size - 1)) || !size)
@@ -620,12 +620,6 @@ float OpenGLESRenderer::getNextPOTSize(const float f)
     }
 
     return static_cast<float>(size);
-}
-
-//----------------------------------------------------------------------------//
-bool OpenGLESRenderer::isTexCoordSystemFlipped() const
-{
-    return true;
 }
 
 //----------------------------------------------------------------------------//

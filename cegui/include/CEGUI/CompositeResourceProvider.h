@@ -28,8 +28,9 @@ Author:   Hans Mackowiak (Hanmac) hanmac@gmx.de
 #define _CEGUICompositeResourceProvider_h_
 #include "CEGUI/Base.h"
 #include "CEGUI/IteratorBase.h"
+#include "CEGUI/MemoryAllocation.h"
 #include "CEGUI/ResourceProvider.h"
-#include <unordered_map>
+#include <map>
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
@@ -73,7 +74,7 @@ public:
       */
   template<typename T>void add(const String& name)
   {
-    add(new T,name);
+    add(CEGUI_NEW_AO T,name);
   }
   /*!
       \brief
@@ -116,7 +117,7 @@ public:
          const String& file_pattern,
          const String& resource_group);
 protected:
-  typedef std::unordered_map<String, ResourceProvider*> Providermap;
+  typedef std::map<String, ResourceProvider*, StringFastLessCompare> Providermap;
   Providermap  d_providerlist;
 public:
   typedef ConstMapIterator<Providermap> ProviderIterator;

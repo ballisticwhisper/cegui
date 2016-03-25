@@ -44,7 +44,7 @@ void RadioButton::addRadioButtonProperties(void)
 {
     const String& propertyOrigin(WidgetTypeName);
 
-    CEGUI_DEFINE_PROPERTY(RadioButton, std::uint32_t,
+    CEGUI_DEFINE_PROPERTY(RadioButton, ulong,
         "GroupID",
         "Property to access the radio button group ID. "
         "Value is an unsigned integer number.",
@@ -53,7 +53,7 @@ void RadioButton::addRadioButtonProperties(void)
 }
 
 //----------------------------------------------------------------------------//
-void RadioButton::setGroupID(std::uint32_t group)
+void RadioButton::setGroupID(ulong group)
 {
     d_groupID = group;
 

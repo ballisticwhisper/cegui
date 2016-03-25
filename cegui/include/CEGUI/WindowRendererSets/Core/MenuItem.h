@@ -70,8 +70,8 @@ namespace CEGUI
         */
         FalagardMenuItem(const String& type);
 
-        void createRenderGeometry() override;
-        Sizef getItemPixelSize(void) const override;
+        void render();
+        Sizef getItemPixelSize(void) const;
 
         // overridden from WindowRenderer
         bool handleFontRenderSizeChange(const Font* const font);

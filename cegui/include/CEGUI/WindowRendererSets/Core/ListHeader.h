@@ -66,9 +66,10 @@ namespace CEGUI
         const String& getSegmentWidgetType() const;
         void setSegmentWidgetType(const String& type);
 
-        void createRenderGeometry() override;
-        ListHeaderSegment* createNewSegment(const String& name) const override;
-        void destroyListSegment(ListHeaderSegment* segment) const override;
+        // overridden from ListHeaderWindowRenderer base class.
+        void render();
+        ListHeaderSegment* createNewSegment(const String& name) const;
+        void destroyListSegment(ListHeaderSegment* segment) const;
 
 protected:
 

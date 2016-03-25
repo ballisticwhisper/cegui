@@ -27,7 +27,7 @@
 #ifndef _Sample_Hello_World_h_
 #define _Sample_Hello_World_h_
 
-#include "Sample.h"
+#include "SampleBase.h"
 
 namespace CEGUI
 {
@@ -35,11 +35,9 @@ namespace CEGUI
     class DefaultWindow;
 }
 
-class HelloWorldSample : public Sample
+class HelloWorldDemo : public Sample
 {
 public:
-    HelloWorldSample();
-
     virtual bool initialise(CEGUI::GUIContext* guiContext);
     virtual void deinitialise();
 

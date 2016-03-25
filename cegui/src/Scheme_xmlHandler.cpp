@@ -30,7 +30,6 @@
 #include "CEGUI/XMLAttributes.h"
 #include "CEGUI/XMLParser.h"
 #include "CEGUI/falagard/WidgetLookManager.h"
-#include "CEGUI/SharedStringStream.h"
 
 // Start of CEGUI namespace section
 namespace CEGUI
@@ -82,15 +81,15 @@ Scheme_xmlHandler::Scheme_xmlHandler():
 Scheme_xmlHandler::~Scheme_xmlHandler()
 {
     if (!d_objectRead)
-        delete d_scheme;
+        CEGUI_DELETE_AO d_scheme;
 }
 
 //----------------------------------------------------------------------------//
 const String& Scheme_xmlHandler::getObjectName() const
 {
     if (!d_scheme)
-        throw InvalidRequestException(
-            "Attempt to access null object.");
+        CEGUI_THROW(InvalidRequestException(
+            "Attempt to access null object."));
 
     return d_scheme->getName();
 }
@@ -99,8 +98,8 @@ const String& Scheme_xmlHandler::getObjectName() const
 Scheme& Scheme_xmlHandler::getObject() const
 {
     if (!d_scheme)
-        throw InvalidRequestException(
-            "Attempt to access null object.");
+        CEGUI_THROW(InvalidRequestException(
+            "Attempt to access null object."));
 
     d_objectRead = true;
     return *d_scheme;
@@ -168,7 +167,7 @@ void Scheme_xmlHandler::elementGUISchemeStart(const XMLAttributes& attributes)
     validateSchemeFileVersion(attributes);
 
     // create empty scheme with desired name
-    d_scheme = new Scheme(name);
+    d_scheme = CEGUI_NEW_AO Scheme(name);
 }
 
 //----------------------------------------------------------------------------//
@@ -180,11 +179,11 @@ void Scheme_xmlHandler::validateSchemeFileVersion(const XMLAttributes& attrs)
     if (version == NativeVersion)
         return;
 
-    throw InvalidRequestException(
+    CEGUI_THROW(InvalidRequestException(
         "You are attempting to load a GUI scheme of version '" + version +
         "' but this CEGUI version is only meant to load GUI schemes of version '" +
         NativeVersion + "'. Consider using the migrate.py script bundled with "
-        "CEGUI Unified Editor to migrate your data.");
+        "CEGUI Unified Editor to migrate your data."));
 }
 
 //----------------------------------------------------------------------------//
@@ -221,7 +220,7 @@ void Scheme_xmlHandler::elementFontStart(const XMLAttributes& attributes)
     font.filename = attributes.getValueAsString(FilenameAttribute);
     font.resourceGroup = attributes.getValueAsString(ResourceGroupAttribute);
 
-    d_scheme->d_fontFiles.push_back(font);
+    d_scheme->d_fonts.push_back(font);
 }
 
 //----------------------------------------------------------------------------//
@@ -303,12 +302,13 @@ void Scheme_xmlHandler::elementLookNFeelStart(const XMLAttributes& attributes)
 void Scheme_xmlHandler::elementGUISchemeEnd()
 {
     if (!d_scheme)
-        throw InvalidRequestException(
-            "Attempt to access null object.");
+        CEGUI_THROW(InvalidRequestException(
+            "Attempt to access null object."));
 
-    String addressStr = SharedStringstream::GetPointerAddressAsString(d_scheme);
+    char addr_buff[32];
+    sprintf(addr_buff, "(%p)", static_cast<void*>(d_scheme));
     Logger::getSingleton().logEvent("Finished creation of GUIScheme '" +
-        d_scheme->getName() + "' via XML file. " + addressStr, Informative);
+        d_scheme->getName() + "' via XML file. " + addr_buff, Informative);
 }
 
 } // End of  CEGUI namespace section

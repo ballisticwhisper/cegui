@@ -39,7 +39,8 @@ namespace CEGUI
 \brief
     Class used as the databuffer for loading files throughout the library.
 */
-class CEGUIEXPORT RawDataContainer
+class CEGUIEXPORT RawDataContainer :
+    public AllocatedObject<RawDataContainer>
 {
 public:
 	/*************************************************************************
@@ -74,7 +75,7 @@ public:
 	\param data
         Pointer to the uint8 data buffer.
 	*/
-    void setData(std::uint8_t* data) { mData = data; }
+    void setData(uint8* data) { mData = data; }
 
 	/*!
 	\brief
@@ -83,8 +84,8 @@ public:
 	\return
 		Pointer to an the uint8 data buffer.
 	*/
-    std::uint8_t* getDataPtr(void) { return mData; }
-    const std::uint8_t* getDataPtr(void) const { return mData; }
+    uint8* getDataPtr(void) { return mData; }
+    const uint8* getDataPtr(void) const { return mData; }
 
 	/*!
 	\brief
@@ -114,7 +115,7 @@ private:
     /*************************************************************************
 		Implementation Data
 	*************************************************************************/
-    std::uint8_t* mData;
+    uint8* mData;
     size_t mSize;
 };
 

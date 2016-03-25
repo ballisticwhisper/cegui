@@ -32,7 +32,6 @@
 
 namespace CEGUI
 {
-    class OpenGLShaderWrapper;
 /*!
 \brief
     Renderer class to interface with desktop OpenGL
@@ -171,17 +170,15 @@ public:
     // base class overrides / abstract function implementations
     void beginRendering();
     void endRendering();
-    virtual Sizef getAdjustedTextureSize(const Sizef& sz);
+    bool isS3TCSupported() const;
     void setupRenderingBlendMode(const BlendMode mode,
                                  const bool force = false);
-    RefCounted<RenderMaterial> createRenderMaterial(const DefaultShaderType shaderType) const;
+    void setViewProjectionMatrix(const mat4Pimpl* viewProjectionMatrix);
 
 protected:
     //! Overrides
-    OpenGLGeometryBufferBase* createGeometryBuffer_impl(CEGUI::RefCounted<RenderMaterial> renderMaterial);
-    TextureTarget* createTextureTarget_impl(bool addStencilBuffer);
-    //! creates a texture of GLTexture type
-    virtual OpenGLTexture* createTexture_impl(const String& name);
+    OpenGLGeometryBufferBase* createGeometryBuffer_impl();
+    TextureTarget* createTextureTarget_impl();
 
     void initialiseRendererIDString();
 
@@ -208,19 +205,17 @@ protected:
     */
     OpenGLRenderer(const Sizef& display_size, const TextureTargetType tt_type);
 
-    void initialiseShaderWrappers();
-
     /*!
     \brief
         Destructor for OpenGLRenderer objects
     */
     virtual ~OpenGLRenderer();
 
-    //! initialise several additional OpenGL states to their defaults
-    void restoreOpenGLStatesToDefaults();
+    //! init the extra GL states enabled via enableExtraStateSettings
+    void setupExtraStates();
 
-    //! clean up the texture matrix stack if state restoring is enabled
-    void cleanupMatrixStack();
+    //! cleanup the extra GL states enabled via enableExtraStateSettings
+    void cleanupExtraStates();
 
     //! initialise OGLTextureTargetFactory that will generate TextureTargets
     void initialiseTextureTargetFactory(const TextureTargetType tt_type);
@@ -229,12 +224,6 @@ protected:
 
     //! pointer to a helper that creates TextureTargets supported by the system.
     OGLTextureTargetFactory* d_textureTargetFactory;
-
-    //! Shaderwrapper for textured & coloured vertices
-    OpenGLShaderWrapper* d_shaderWrapperTextured;
-
-    //! Shaderwrapper for coloured vertices
-    OpenGLShaderWrapper* d_shaderWrapperSolid;
 };
 
 }

@@ -58,22 +58,12 @@ namespace CEGUI
         d_identifierString = "CEGUI::XercesParser - Official Xerces-C++ based parser module for CEGUI";
         // add property
         addProperty(&s_schemaDefaultResourceGroupProperty);
-
-        String propertyOrigin("XercesParser");
-        CEGUI_DEFINE_PROPERTY(XercesParser, bool, "isXmlValidationEnabled",
-                              "Property to get/set if XML validation is enabled or disabled globally. "
-                              "If it's disabled it will not allow any xml validation. "
-                              "If it's enabled the validation behaviour is dependending on what is "
-                              "passed to parseXML.",
-                              &XercesParser::setXmlValidationEnabled,
-                              &XercesParser::isXmlValidationEnabled,
-                              true);
     }
 
     XercesParser::~XercesParser(void)
     {}
 
-    void XercesParser::parseXML(XMLHandler& handler, const RawDataContainer& source, const String& schemaName, bool xmlValidationEnabled)
+    void XercesParser::parseXML(XMLHandler& handler, const RawDataContainer& source, const String& schemaName)
     {
         XERCES_CPP_NAMESPACE_USE;
 
@@ -82,54 +72,45 @@ namespace CEGUI
         // create parser
         SAX2XMLReader* reader = createReader(xercesHandler);
 
-        try
+        CEGUI_TRY
         {
-            bool forceXmlValidation;
-
-            // ignore local settings if validation is disabled globally
-            if (!isXmlValidationEnabled())
-                forceXmlValidation = false;
-            else
-                forceXmlValidation = xmlValidationEnabled;
-
             // set up schema
-            if (forceXmlValidation)
-                initialiseSchema(reader, schemaName);
+            initialiseSchema(reader, schemaName);
             // do parse
             doParse(reader, source);
         }
-        catch (const XMLException& exc)
+        CEGUI_CATCH(const XMLException& exc)
         {
             if (exc.getCode() != XMLExcepts::NoError)
             {
                 delete reader;
 
                 char* excmsg = XMLString::transcode(exc.getMessage());
-                String message("An error occurred at line nr. " + PropertyHelper<std::uint32_t>::toString((std::uint32_t)exc.getSrcLine()) + " while parsing XML.  Additional information: ");
+                String message("An error occurred at line nr. " + PropertyHelper<uint>::toString((uint)exc.getSrcLine()) + " while parsing XML.  Additional information: ");
                 message += excmsg;
                 XMLString::release(&excmsg);
 
-                throw FileIOException(message);
+                CEGUI_THROW(FileIOException(message));
             }
 
         }
-        catch (const SAXParseException& exc)
+        CEGUI_CATCH(const SAXParseException& exc)
         {
             delete reader;
 
             char* excmsg = XMLString::transcode(exc.getMessage());
-            String message("An error occurred at line nr. " + PropertyHelper<std::uint32_t>::toString((std::uint32_t)exc.getLineNumber()) + " while parsing XML.  Additional information: ");
+            String message("An error occurred at line nr. " + PropertyHelper<uint>::toString((uint)exc.getLineNumber()) + " while parsing XML.  Additional information: ");
             message += excmsg;
             XMLString::release(&excmsg);
 
-            throw FileIOException(message);
+            CEGUI_THROW(FileIOException(message));
         }
-        catch (...)
+        CEGUI_CATCH(...)
         {
             delete reader;
 
             Logger::getSingleton().logEvent("An unexpected error occurred while parsing XML", Errors);
-            throw;
+            CEGUI_RETHROW;
         }
 
         // cleanup
@@ -141,11 +122,11 @@ namespace CEGUI
         XERCES_CPP_NAMESPACE_USE;
 
         // initialise Xerces-C XML system
-        try
+        CEGUI_TRY
         {
             XMLPlatformUtils::Initialize();
         }
-        catch (XMLException& exc)
+        CEGUI_CATCH(XMLException& exc)
         {
             // prepare a message about the failure
             char* excmsg = XMLString::transcode(exc.getMessage());
@@ -154,7 +135,7 @@ namespace CEGUI
             XMLString::release(&excmsg);
 
             // throw a C string (because it won't try and use logger, which may not be available)
-            throw message.c_str();
+            CEGUI_THROW(message.c_str());
         }
 
         return true;
@@ -173,7 +154,7 @@ namespace CEGUI
         String attributeName;
         String attributeValue;
 
-        for (unsigned int i = 0; i < src.getLength(); ++i)
+        for (uint i = 0; i < src.getLength(); ++i)
         {
             // TODO dalfy: Optimize this using temporary value. 
             attributeName = transcodeXmlCharToString(src.getLocalName(i), XMLString::stringLen(src.getLocalName(i)));
@@ -197,17 +178,18 @@ namespace CEGUI
             XMLSize_t outputLength;
             XMLSize_t eaten = 0;
             XMLSize_t offset = 0;
-#else
-            char outBuff[128];
+#else /* _XERCES_VERSION >= 30000 */
+            utf8 outBuff[128];
             unsigned int outputLength;
             unsigned int eaten = 0;
             unsigned int offset = 0;
-#endif
+#endif /* _XERCES_VERSION >= 30000 */
+//            unsigned int inputLength = XMLString::stringLen(xmlch_str); // dalfy caracters node need to transcode but give the size 
 
-            while (inputLength != 0)
+            while (inputLength)
             {
                 outputLength = transcoder->transcodeTo(xmlch_str + offset, inputLength, outBuff, 128, eaten, XMLTranscoder::UnRep_RepChar);
-                out.append(reinterpret_cast<char*>(&outBuff[0]), outputLength);
+                out.append((encoded_char*)outBuff, outputLength);
                 offset += eaten;
                 inputLength -= eaten;
             }
@@ -218,61 +200,44 @@ namespace CEGUI
         }
         else
         {
-            throw GenericException("Internal Error: Could not create UTF-8 string transcoder.");
+            CEGUI_THROW(GenericException("Internal Error: Could not create UTF-8 string transcoder."));
         }
 
     }
 
     void XercesParser::initialiseSchema(XERCES_CPP_NAMESPACE::SAX2XMLReader* reader, const String& schemaName)
     {
-        // only load the schema if it's name is passed
-        if (!schemaName.empty())
-        {
-            XERCES_CPP_NAMESPACE_USE;
+        XERCES_CPP_NAMESPACE_USE;
 
-            // enable schema use and set validation options
-            reader->setFeature(XMLUni::fgXercesSchema, true);
-            reader->setFeature(XMLUni::fgSAX2CoreValidation, true);
-            reader->setFeature(XMLUni::fgXercesValidationErrorAsFatal, true);
+        // enable schema use and set validation options
+        reader->setFeature(XMLUni::fgXercesSchema, true);
+        reader->setFeature(XMLUni::fgSAX2CoreValidation, true);
+        reader->setFeature(XMLUni::fgXercesValidationErrorAsFatal, true);
 
-            // load in the raw schema data
-            RawDataContainer rawSchemaData;
-            // load the schema from the resource group
-            Logger::getSingleton().logEvent("XercesParser::initialiseSchema - Attempting to load schema from file '" + schemaName + "'.");
-            System::getSingleton().getResourceProvider()->loadRawDataContainer(schemaName, rawSchemaData, d_defaultSchemaResourceGroup);
+        // load in the raw schema data
+        RawDataContainer rawSchemaData;
+        // load the schema from the resource group
+        Logger::getSingleton().logEvent("XercesParser::initialiseSchema - Attempting to load schema from file '" + schemaName + "'.");
+        System::getSingleton().getResourceProvider()->loadRawDataContainer(schemaName, rawSchemaData, d_defaultSchemaResourceGroup);
 
-            // wrap schema data in a xerces MemBufInputSource object
-            MemBufInputSource schemaData(
-                rawSchemaData.getDataPtr(),
-                static_cast<const unsigned int>(rawSchemaData.getSize()),
-#if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_STD) || (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8)
-                schemaName.c_str(),
-#elif CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32
-                schemaName.toUtf8String().c_str(),
-#endif
-                false);
-            reader->loadGrammar(schemaData, Grammar::SchemaGrammarType, true);
-            // enable grammar reuse
-            reader->setFeature(XMLUni::fgXercesUseCachedGrammarInParse, true);
+        // wrap schema data in a xerces MemBufInputSource object
+        MemBufInputSource  schemaData(
+            rawSchemaData.getDataPtr(),
+            static_cast<const unsigned int>(rawSchemaData.getSize()),
+            schemaName.c_str(),
+            false);
+        reader->loadGrammar(schemaData, Grammar::SchemaGrammarType, true);
+        // enable grammar reuse
+        reader->setFeature(XMLUni::fgXercesUseCachedGrammarInParse, true);
 
-            // set schema for usage     
-#if (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_STD) || (CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_8)
-            XMLCh* pval = XMLString::transcode(schemaName.c_str());
-#elif CEGUI_STRING_CLASS == CEGUI_STRING_CLASS_UTF_32
-            XMLCh* pval = XMLString::transcode(schemaName.toUtf8String().c_str());
-#endif
-            reader->setProperty(XMLUni::fgXercesSchemaExternalNoNameSpaceSchemaLocation, pval);
-            XMLString::release(&pval);
-            Logger::getSingleton().logEvent("XercesParser::initialiseSchema - XML schema file '" + schemaName + "' has been initialised.");
+        // set schema for usage
+        XMLCh* pval = XMLString::transcode(schemaName.c_str());
+        reader->setProperty(XMLUni::fgXercesSchemaExternalNoNameSpaceSchemaLocation, pval);
+        XMLString::release(&pval);
+        Logger::getSingleton().logEvent("XercesParser::initialiseSchema - XML schema file '" + schemaName + "' has been initialised.");
 
-            // use resource provider to release loaded schema data (if it supports this)
-            System::getSingleton().getResourceProvider()->unloadRawDataContainer(rawSchemaData);
-        }
-        else
-        {
-            // otherwise ignore the missing schema and proceed
-            Logger::getSingleton().logEvent("XercesParser::initialiseSchema - No schema specified. Proceeding.");
-        }
+        // use resource provider to release loaded schema data (if it supports this)
+        System::getSingleton().getResourceProvider()->unloadRawDataContainer(rawSchemaData);
     }
 
     XERCES_CPP_NAMESPACE::SAX2XMLReader* XercesParser::createReader(XERCES_CPP_NAMESPACE::DefaultHandler& handler)
@@ -356,12 +321,12 @@ namespace CEGUI
 
     void XercesHandler::error (const XERCES_CPP_NAMESPACE::SAXParseException &exc)
     {
-        throw exc;
+        CEGUI_THROW(exc);
     }
 
     void XercesHandler::fatalError (const XERCES_CPP_NAMESPACE::SAXParseException &exc)
     {
-        throw exc;
+        CEGUI_THROW(exc);
     }
 
 } // End of  CEGUI namespace section

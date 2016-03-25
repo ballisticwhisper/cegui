@@ -54,13 +54,13 @@ int pbAttrs[] =
 };
 
 //----------------------------------------------------------------------------//
-OpenGLGLXPBTextureTarget::OpenGLGLXPBTextureTarget(OpenGLRendererBase& owner, bool addStencilBuffer) :
-    OpenGLTextureTarget(owner, addStencilBuffer),
+OpenGLGLXPBTextureTarget::OpenGLGLXPBTextureTarget(OpenGLRendererBase& owner) :
+    OpenGLTextureTarget(owner),
     d_pbuffer(0)
 {
     if (!GLXEW_VERSION_1_3)
-        throw InvalidRequestException("System does not support GLX >= 1.3 "
-            "required by CEGUI pbuffer usage under GLX");
+        CEGUI_THROW(InvalidRequestException("System does not support GLX >= 1.3 "
+            "required by CEGUI pbuffer usage under GLX"));
 
     d_dpy = glXGetCurrentDisplay();
 
@@ -171,8 +171,8 @@ void OpenGLGLXPBTextureTarget::initialisePBuffer()
     d_pbuffer = glXCreatePbuffer(d_dpy, d_fbconfig, creation_attrs);
 
     if (!d_pbuffer)
-        throw RendererException(
-            "pbuffer creation error:  glXCreatePbuffer() failed");
+        CEGUI_THROW(RendererException(
+            "pbuffer creation error:  glXCreatePbuffer() failed"));
 
     // get the real size of the buffer that was created
     GLuint actual_width, actual_height;
@@ -229,8 +229,8 @@ void OpenGLGLXPBTextureTarget::selectFBConfig()
 
     glxcfgs = glXChooseFBConfig(d_dpy, DefaultScreen(d_dpy), pbAttrs, &cfgcnt);
     if (!glxcfgs)
-        throw RendererException(
-            "pbuffer creation failure, can't get suitable configuration.");
+        CEGUI_THROW(RendererException(
+            "pbuffer creation failure, can't get suitable configuration."));
 
     d_fbconfig = glxcfgs[0];
 }
@@ -242,8 +242,8 @@ void OpenGLGLXPBTextureTarget::createContext()
                                     glXGetCurrentContext(), true);
 
     if (!d_context)
-        throw RendererException(
-            "Failed to create GLX context for pbuffer.");
+        CEGUI_THROW(RendererException(
+            "Failed to create GLX context for pbuffer."));
 }
 
 //----------------------------------------------------------------------------//

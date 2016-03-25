@@ -25,7 +25,7 @@
  *   OTHER DEALINGS IN THE SOFTWARE.
  ***************************************************************************/
 #include "CEGUI/widgets/DefaultWindow.h"
-#include <limits>
+
 
 // Start of CEGUI namespace section
 namespace CEGUI
@@ -42,50 +42,75 @@ const String DefaultWindow::WidgetTypeName("DefaultWindow");
 DefaultWindow::DefaultWindow(const String& type, const String& name) :
     Window(type, name)
 {
-    const float maximum_float = std::numeric_limits<float>::max();
-    setMaxSize(USize(cegui_absdim(maximum_float), cegui_absdim(maximum_float)));
-
-    setSize(USize(cegui_reldim(1.0f), cegui_reldim(1.0f)));
+    USize sz(cegui_reldim(1.0f), cegui_reldim(1.0f));
+    setMaxSize(sz);
+    setSize(sz);
 }
 
 //----------------------------------------------------------------------------//
-void DefaultWindow::onCursorMove(CursorInputEventArgs& e)
+void DefaultWindow::onMouseMove(MouseEventArgs& e)
 {
     // always call the base class handler
-    Window::onCursorMove(e);
-    updatePointerEventHandled(e);
+    Window::onMouseMove(e);
+    updateMouseEventHandled(e);
 }
 
 //----------------------------------------------------------------------------//
-void DefaultWindow::onScroll(CursorInputEventArgs& e)
+void DefaultWindow::onMouseWheel(MouseEventArgs& e)
 {
     // always call the base class handler
-    Window::onScroll(e);
-    updatePointerEventHandled(e);
+    Window::onMouseWheel(e);
+    updateMouseEventHandled(e);
 }
 
 //----------------------------------------------------------------------------//
-void DefaultWindow::onCursorPressHold(CursorInputEventArgs& e)
+void DefaultWindow::onMouseButtonDown(MouseEventArgs& e)
 {
     // always call the base class handler
-    Window::onCursorPressHold(e);
-    updatePointerEventHandled(e);
+    Window::onMouseButtonDown(e);
+    updateMouseEventHandled(e);
 }
 
 //----------------------------------------------------------------------------//
-void DefaultWindow::onCursorActivate(CursorInputEventArgs& e)
+void DefaultWindow::onMouseButtonUp(MouseEventArgs& e)
 {
     // always call the base class handler
-    Window::onCursorActivate(e);
-    updatePointerEventHandled(e);
+    Window::onMouseButtonUp(e);
+    updateMouseEventHandled(e);
 }
 
 //----------------------------------------------------------------------------//
-void DefaultWindow::updatePointerEventHandled(CursorInputEventArgs& e) const
+void DefaultWindow::onMouseClicked(MouseEventArgs& e)
+{
+    // always call the base class handler
+    Window::onMouseClicked(e);
+    // only adjust the handled state if event was directly injected
+    if (!getGUIContext().isMouseClickEventGenerationEnabled())
+        updateMouseEventHandled(e);
+}
+
+//----------------------------------------------------------------------------//
+void DefaultWindow::onMouseDoubleClicked(MouseEventArgs& e)
+{
+    // always call the base class handler
+    Window::onMouseDoubleClicked(e);
+    updateMouseEventHandled(e);
+}
+
+//----------------------------------------------------------------------------//
+void DefaultWindow::onMouseTripleClicked(MouseEventArgs& e)
+{
+    // always call the base class handler
+    Window::onMouseTripleClicked(e);
+    updateMouseEventHandled(e);
+}
+
+//----------------------------------------------------------------------------//
+void DefaultWindow::updateMouseEventHandled(MouseEventArgs& e) const
 {
     // by default, if we are a root window (no parent) with pass-though enabled
-    // we do /not/ mark cursor events as handled.
-    if (!d_parent && e.handled && d_cursorPassThroughEnabled)
+    // we do /not/ mark mouse events as handled.
+    if (!d_parent && e.handled && d_mousePassThroughEnabled)
         --e.handled;
 }
 
@@ -94,24 +119,10 @@ bool DefaultWindow::moveToFront_impl(bool wasClicked)
 {
     const bool took_action = Window::moveToFront_impl(wasClicked);
 
-    if (!d_parent && d_cursorPassThroughEnabled)
+    if (!d_parent && d_mousePassThroughEnabled)
         return false;
     else
         return took_action;
-}
-
-//----------------------------------------------------------------------------//
-void DefaultWindow::onSemanticInputEvent(SemanticEventArgs& e)
-{
-    // always call the base class handler
-    Window::onSemanticInputEvent(e);
-}
-
-//----------------------------------------------------------------------------//
-bool DefaultWindow::canFocus()
-{
-    // cannot focus something that doesn't have an explicit visual appearance
-    return false;
 }
 
 //----------------------------------------------------------------------------//

@@ -37,7 +37,7 @@ namespace CEGUI
 \brief
     Slot functor class that calls back via a free function pointer.
 */
-class FreeFunctionSlot : public SlotFunctorBase<EventArgs>
+class FreeFunctionSlot : public SlotFunctorBase
 {
 public:
     //! Slot function type.
@@ -65,7 +65,7 @@ private:
     This functor always returns true to CEGUI, which means the event was
     handled.
 */
-class FreeFunctionSlotVoid : public SlotFunctorBase<EventArgs>
+class FreeFunctionSlotVoid : public SlotFunctorBase
 {
 public:
     //! Slot function type.
@@ -91,7 +91,7 @@ private:
     Slot functor class that calls back via a free function pointer.
     This variant ignores passed EventArgs.
 */
-class FreeFunctionSlotNoArgs : public SlotFunctorBase<EventArgs>
+class FreeFunctionSlotNoArgs : public SlotFunctorBase
 {
 public:
     //! Slot function type.
@@ -120,7 +120,7 @@ private:
     This functor always returns true to CEGUI, which means the event was
     handled.
 */
-class FreeFunctionSlotVoidNoArgs : public SlotFunctorBase<EventArgs>
+class FreeFunctionSlotVoidNoArgs : public SlotFunctorBase
 {
 public:
     //! Slot function type.

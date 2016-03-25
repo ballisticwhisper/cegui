@@ -29,22 +29,23 @@
 #ifndef _CEGUIComboDropList_h_
 #define _CEGUIComboDropList_h_
 
-#include "CEGUI/widgets/ListWidget.h"
+#include "./Listbox.h"
+
 
 #if defined(_MSC_VER)
 #	pragma warning(push)
 #	pragma warning(disable : 4251)
 #endif
 
+
 // Start of CEGUI namespace section
 namespace CEGUI
 {
 /*!
 \brief
-    Base class for the combo box drop down list.
-    This is a specialisation of the ListWidget class.
+	Base class for the combo box drop down list.  This is a specialisation of the Listbox class.
 */
-class CEGUIEXPORT ComboDropList : public ListWidget
+class CEGUIEXPORT ComboDropList : public Listbox
 {
 public:
 	static const String EventNamespace;				//!< Namespace for global events
@@ -55,7 +56,7 @@ public:
 		Constants
 	*************************************************************************/
 	// Event names
-    /** Event fired when the user confirms the selection by activation (of the cursor).
+    /** Event fired when the user confirms the selection by clicking the mouse.
      * Handlers are passed a const WindowEventArgs reference with
      * WindowEventArgs::window set to the ComboDropList whose selection has been
      * confirmed by the user.
@@ -81,9 +82,9 @@ public:
 		Set whether the drop-list is 'armed' for selection.
 
 	\note
-        This setting is not exclusively under client control; the ComboDropList will auto-arm in
-        response to certain cursor left source events.  This is also dependent upon the autoArm
-        setting of the ComboDropList.
+		This setting is not exclusively under client control; the ComboDropList will auto-arm in
+		response to certain left mouse button events.  This is also dependant upon the autoArm
+		setting of the ComboDropList.
 
 	\param setting
 		- true to arm the box; items will be highlighted and the next left button up event
@@ -114,9 +115,9 @@ public:
 	\brief
 		Set the mode of operation for the ComboDropList.
 
-    \param setting
-        - true if the ComboDropList auto-arms when the cursor enters the box.
-        - false if the user must activate to arm the box.
+	\param setting
+		- true if the ComboDropList auto-arms when the mouse enters the box.
+		- false if the user must click to arm the box.
 
 	\return
 		Nothing.
@@ -128,9 +129,9 @@ public:
 	\brief
 		returns the mode of operation for the drop-list
 
-    \return
-        - true if the ComboDropList auto-arms when the cursor enters the box.
-        - false if the user must click to arm the box.
+	\return
+		- true if the ComboDropList auto-arms when the mouse enters the box.
+		- false if the user must click to arm the box.
 	*/
 	bool	isAutoArmEnabled(void) const		{ return d_autoArm; }
 
@@ -168,19 +169,20 @@ protected:
 	/*************************************************************************
 		Overridden Event handling
 	*************************************************************************/
-    virtual void    onCursorMove(CursorInputEventArgs& e);
-    virtual void    onCursorPressHold(CursorInputEventArgs& e);
-    virtual void    onCursorActivate(CursorInputEventArgs& e);
+	virtual void	onMouseMove(MouseEventArgs& e);
+	virtual void	onMouseButtonDown(MouseEventArgs& e);
+	virtual void	onMouseButtonUp(MouseEventArgs& e);
 	virtual void	onCaptureLost(WindowEventArgs& e);
-    virtual void    onViewContentsChanged(WindowEventArgs& e);
-    virtual void    onSelectionChanged(ItemViewEventArgs& e);
+	virtual void	onActivated(ActivationEventArgs& e);
+    virtual void    onListContentsChanged(WindowEventArgs& e);
+    virtual void    onSelectionChanged(WindowEventArgs& e);
 
 	/*************************************************************************
 		Implementation Data
 	*************************************************************************/
-	bool	d_autoArm;		//!< true if the box auto-arms when the cursor enters it.
+	bool	d_autoArm;		//!< true if the box auto-arms when the mouse enters it.
 	bool	d_armed;		//!< true when item selection has been armed.
-    StandardItem* d_lastItemSelected; //!< Item last accepted by user.
+    ListboxItem* d_lastClickSelected; //!< Item last accepted by user.
 };
 
 } // End of  CEGUI namespace section

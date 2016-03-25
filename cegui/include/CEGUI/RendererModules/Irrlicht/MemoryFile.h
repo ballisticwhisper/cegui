@@ -48,7 +48,7 @@ class IrrlichtMemoryFile : public irr::io::IReadFile
 {
 public:
     IrrlichtMemoryFile(const String& filename, const unsigned char* memory,
-                       std::uint32_t size);
+                       uint32 size);
     virtual ~IrrlichtMemoryFile() {};
 
     // implement required interface from IReadFile
@@ -69,8 +69,8 @@ protected:
     String d_filename;
 #endif
     const unsigned char* d_buffer;
-    std::uint32_t d_size;
-    std::uint32_t d_position;
+    uint32 d_size;
+    uint32 d_position;
 };
 
 } // End of  CEGUI namespace section

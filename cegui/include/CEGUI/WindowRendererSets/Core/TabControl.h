@@ -75,7 +75,7 @@ namespace CEGUI
         const String& getTabButtonType() const;
         void setTabButtonType(const String& type);
 
-        void createRenderGeometry() override;
+        void render();
 
     protected:
         // overridden from TabControl base class.

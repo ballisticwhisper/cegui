@@ -58,7 +58,8 @@ namespace CEGUI
 	used to access those Window objects by name.
 */
 class CEGUIEXPORT WindowManager : public Singleton<WindowManager>,
-                                  public EventSet
+                                  public EventSet,
+                                  public AllocatedObject<WindowManager>
 {
 public:
     /*************************************************************************
@@ -405,16 +406,17 @@ private:
     /*************************************************************************
 		Implementation Data
 	*************************************************************************/
-    typedef std::vector<Window*> WindowVector; //!< Type to use for a collection of Window pointers.
+    typedef std::vector<Window*
+        CEGUI_VECTOR_ALLOC(Window*)> WindowVector; //!< Type to use for a collection of Window pointers.
 
     //! collection of created windows.
 	WindowVector d_windowRegistry;
     WindowVector d_deathrow; //!< Collection of 'destroyed' windows.
 
-    std::uint32_t d_uid_counter;  //!< Counter used to generate unique window names.
+    unsigned long   d_uid_counter;  //!< Counter used to generate unique window names.
     static String d_defaultResourceGroup;   //!< holds default resource group
     //! count of times WM is locked against new window creation.
-    unsigned int    d_lockCount;
+    uint    d_lockCount;
 
 public:
 	/*************************************************************************

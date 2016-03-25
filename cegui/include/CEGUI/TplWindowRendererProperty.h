@@ -53,7 +53,7 @@ public:
 
     virtual Property* clone() const
     {
-        return new TplWindowRendererProperty<C, T>(*this);
+        return CEGUI_NEW_AO TplWindowRendererProperty<C, T>(*this);
     }
 
 protected:

@@ -40,7 +40,7 @@ namespace CEGUI
     {
     }
 
-    void FalagardFrameWindow::createRenderGeometry()
+    void FalagardFrameWindow::render()
     {
         FrameWindow* w = (FrameWindow*)d_window;
         // do not render anything for the rolled-up state.
@@ -54,14 +54,14 @@ namespace CEGUI
 
         const StateImagery* imagery;
 
-        try
+        CEGUI_TRY
         {
             // get WidgetLookFeel for the assigned look.
             const WidgetLookFeel& wlf = getLookNFeel();
             // try and get imagery for our current state
             imagery = &wlf.getStateImagery(stateName);
         }
-        catch (UnknownObjectException&)
+        CEGUI_CATCH (UnknownObjectException&)
         {
             // log error so we know imagery is missing, and then quit.
             return;
@@ -79,12 +79,7 @@ namespace CEGUI
 
         // build name of area to fetch
         String areaName("Client");
-
-        if (w->isChild(FrameWindow::TitlebarName))
-            areaName += w->isTitleBarEnabled() ? "WithTitle" : "NoTitle";
-        else
-            areaName += "NoTitle";
-
+        areaName += w->isTitleBarEnabled() ? "WithTitle" : "NoTitle";
         areaName += w->isFrameEnabled() ? "WithFrame" : "NoFrame";
 
         // get WidgetLookFeel for the assigned look.

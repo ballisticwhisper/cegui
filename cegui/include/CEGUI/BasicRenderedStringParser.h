@@ -29,11 +29,11 @@
 
 #include "CEGUI/RenderedStringParser.h"
 
-#include "CEGUI/Rectf.h"
+#include "CEGUI/Rect.h"
 #include "CEGUI/ColourRect.h"
 #include "CEGUI/String.h"
 #include "CEGUI/falagard/Enums.h"
-#include <unordered_map>
+#include <map>
 
 #if defined(_MSC_VER)
 #   pragma warning(push)
@@ -193,7 +193,7 @@ protected:
     typedef void (BasicRenderedStringParser::*TagHandler)(RenderedString&,
                                                           const String&);
     //! definition of type used to despatch tag handler functions
-    typedef std::unordered_map<String, TagHandler> TagHandlerMap;
+    typedef std::map<String, TagHandler, StringFastLessCompare> TagHandlerMap;
     //! Collection to map tag names to their handler functions.
     TagHandlerMap d_tagHandlers;
 };

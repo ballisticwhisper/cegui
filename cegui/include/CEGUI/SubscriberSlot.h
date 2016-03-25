@@ -48,7 +48,8 @@ namespace CEGUI
     exceptions are for subscribing member functions and references to functor
     objects.
 */
-class CEGUIEXPORT SubscriberSlot
+class CEGUIEXPORT SubscriberSlot :
+    public AllocatedObject<SubscriberSlot>
 {
 public:
     /*!
@@ -71,7 +72,7 @@ public:
         The handler doesn't have to return bool. True is always returned.
     */
     inline SubscriberSlot(FreeFunctionSlotVoid::SlotFunction* func):
-        d_functor_impl(new FreeFunctionSlotVoid(func))
+        d_functor_impl(CEGUI_NEW_AO FreeFunctionSlotVoid(func))
     {}
 
     /*!
@@ -82,7 +83,7 @@ public:
         The handler doesn't have to take EventArgs. EventArgs are ignored.
     */
     inline SubscriberSlot(FreeFunctionSlotNoArgs::SlotFunction* func):
-        d_functor_impl(new FreeFunctionSlotNoArgs(func))
+        d_functor_impl(CEGUI_NEW_AO FreeFunctionSlotNoArgs(func))
     {}
 
     /*!
@@ -93,7 +94,7 @@ public:
         The handler doesn't have to take EventArgs or return bool.
     */
     inline SubscriberSlot(FreeFunctionSlotVoidNoArgs::SlotFunction* func):
-        d_functor_impl(new FreeFunctionSlotVoidNoArgs(func))
+        d_functor_impl(CEGUI_NEW_AO FreeFunctionSlotVoidNoArgs(func))
     {}
 
     /*!
@@ -196,7 +197,7 @@ public:
 
 private:
     //! Points to the internal functor object to which we are bound
-    SlotFunctorBase<EventArgs>* d_functor_impl;
+    SlotFunctorBase* d_functor_impl;
 };
 
 } // End of  CEGUI namespace section

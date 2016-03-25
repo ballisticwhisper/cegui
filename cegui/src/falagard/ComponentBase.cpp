@@ -43,11 +43,10 @@ FalagardComponentBase::~FalagardComponentBase()
 {}
 
 //----------------------------------------------------------------------------//
-void FalagardComponentBase::createRenderGeometryAndAddToWindow(
-    Window& srcWindow,
-    const CEGUI::ColourRect* modColours,
-    const Rectf* clipper,
-    bool clipToDisplay) const
+void FalagardComponentBase::render(Window& srcWindow,
+                                   const CEGUI::ColourRect* modColours,
+                                   const Rectf* clipper,
+                                   bool clipToDisplay) const
 {
     Rectf dest_rect(d_area.getPixelRect(srcWindow));
 
@@ -55,17 +54,16 @@ void FalagardComponentBase::createRenderGeometryAndAddToWindow(
         clipper = &dest_rect;
 
     const Rectf final_clip_rect(dest_rect.getIntersection(*clipper));
-    addImageRenderGeometryToWindow_impl(srcWindow, dest_rect, modColours,
-        &final_clip_rect, clipToDisplay);
+    render_impl(srcWindow, dest_rect, modColours,
+                &final_clip_rect, clipToDisplay);
 }
 
 //----------------------------------------------------------------------------//
-void FalagardComponentBase::createRenderGeometryAndAddToWindow(
-    Window& srcWindow,
-    const Rectf& baseRect,
-    const CEGUI::ColourRect* modColours,
-    const Rectf* clipper,
-    bool clipToDisplay) const
+void FalagardComponentBase::render(Window& srcWindow,
+                                   const Rectf& baseRect,
+                                   const CEGUI::ColourRect* modColours,
+                                   const Rectf* clipper,
+                                   bool clipToDisplay) const
 {
     Rectf dest_rect(d_area.getPixelRect(srcWindow, baseRect));
 
@@ -73,9 +71,8 @@ void FalagardComponentBase::createRenderGeometryAndAddToWindow(
         clipper = &dest_rect;
 
     const Rectf final_clip_rect(dest_rect.getIntersection(*clipper));
-
-    addImageRenderGeometryToWindow_impl(srcWindow, dest_rect, modColours,
-        &final_clip_rect, clipToDisplay);
+    render_impl(srcWindow, dest_rect, modColours,
+                &final_clip_rect, clipToDisplay);
 }
 
 //----------------------------------------------------------------------------//

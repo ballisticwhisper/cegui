@@ -40,7 +40,7 @@ void Delay::set(CEGUI::PropertyReceiver* receiver, const CEGUI::String& value)
 }
 CEGUI::Property* Delay::clone() const
 {
-    return new Delay(*this);
+    return CEGUI_NEW_AO Delay(*this);
 }
 
 }

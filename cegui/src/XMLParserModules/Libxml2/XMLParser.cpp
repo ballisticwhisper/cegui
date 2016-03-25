@@ -26,7 +26,6 @@
  ***************************************************************************/
 #include "CEGUI/XMLParserModules/Libxml2/XMLParser.h"
 #include "CEGUI/System.h"
-#include "CEGUI/String.h"
 #include "CEGUI/ResourceProvider.h"
 #include "CEGUI/Exceptions.h"
 #include "CEGUI/XMLAttributes.h"
@@ -50,18 +49,14 @@ void processXMLElement(XMLHandler& handler, xmlNode* node)
     while (currAttr)
     {
         xmlChar* val = xmlGetProp(node, currAttr->name);
-        CEGUI::String value( reinterpret_cast<char*>(val) );
-
-        CEGUI::String attrName( reinterpret_cast<const char*>(currAttr->name));
-
-        attrs.add(attrName, value);
+        attrs.add(reinterpret_cast<const encoded_char*>(currAttr->name),
+                  reinterpret_cast<const encoded_char*>(val));
         xmlFree(val);
         currAttr = currAttr->next;
     }
 
     // element start processing
-    CEGUI::String nodeName( reinterpret_cast<const char*>(node->name));
-    handler.elementStart(nodeName, attrs);
+    handler.elementStart(reinterpret_cast<const encoded_char*>(node->name), attrs);
 
     for (xmlNode* cur_node = node->children; cur_node; cur_node = cur_node->next)
     {
@@ -73,10 +68,7 @@ void processXMLElement(XMLHandler& handler, xmlNode* node)
 
         case XML_TEXT_NODE:
             if (cur_node->content != 0 && *cur_node->content!= '\0')
-            {
-                String cureNodeContent( reinterpret_cast<const char*>(cur_node->content) );
-                handler.text(cureNodeContent);
-            }
+                handler.text(reinterpret_cast<const encoded_char*>(cur_node->content));
             break;
 
         default:
@@ -85,7 +77,7 @@ void processXMLElement(XMLHandler& handler, xmlNode* node)
     }
 
     // element end processing
-    handler.elementEnd(nodeName);
+    handler.elementEnd(reinterpret_cast<const encoded_char*>(node->name));
 }
 
 LibxmlParser::LibxmlParser(void)
@@ -99,8 +91,7 @@ LibxmlParser::~LibxmlParser(void)
 
 void LibxmlParser::parseXML(XMLHandler& handler,
                             const RawDataContainer& source,
-                            const String& /*schemaName*/,
-                            bool /*allowXmlValidation*/)
+                            const String& /*schemaName*/)
 {
     xmlDocPtr doc = xmlParseMemory(
         reinterpret_cast<const char*>(source.getDataPtr()),
@@ -110,11 +101,11 @@ void LibxmlParser::parseXML(XMLHandler& handler,
     {
         xmlError* err = xmlGetLastError();
 
-        throw GenericException(
+        CEGUI_THROW(GenericException(
             String("xmlParseMemory failed in file: '") +
             err->file + "' at line number" +
-            PropertyHelper<std::uint32_t>::toString(err->line) + ".  Error is:" +
-            err->message);
+            PropertyHelper<uint>::toString(err->line) + ".  Error is:" +
+            err->message));
     }
 
     // get root element

@@ -30,12 +30,12 @@
 #include "CEGUI/Singleton.h"
 #include "CEGUI/ChainedXMLHandler.h"
 #include "CEGUI/String.h"
-#include "CEGUI/Sizef.h"
+#include "CEGUI/Size.h"
 #include "CEGUI/ImageFactory.h"
 #include "CEGUI/Logger.h"
 #include "CEGUI/Exceptions.h"
 #include "CEGUI/IteratorBase.h"
-#include <unordered_map>
+#include <map>
 
 #if defined(_MSC_VER)
 #	pragma warning(push)
@@ -47,6 +47,7 @@ namespace CEGUI
 {
 class CEGUIEXPORT ImageManager :
         public Singleton<ImageManager>,
+        public AllocatedObject<ImageManager>,
         public ChainedXMLHandler
 {
 public:
@@ -139,7 +140,7 @@ public:
     Image& get(const String& name) const;
     bool isDefined(const String& name) const;
 
-    unsigned int getImageCount() const;
+    uint getImageCount() const;
 
     void loadImageset(const String& filename, const String& resource_group = "");
     void loadImagesetFromString(const String& source);
@@ -147,7 +148,7 @@ public:
     void destroyImageCollection(const String& prefix,
                                 const bool delete_texture = true);
 
-    void addBitmapImageFromFile(const String& name,
+    void addFromImageFile(const String& name,
                           const String& filename,
                           const String& resource_group = "");
 
@@ -189,7 +190,9 @@ public:
     typedef std::pair<Image*, ImageFactory*> ImagePair;
 
     //! container type used to hold the images.
-    typedef std::unordered_map<String, ImagePair> ImageMap;
+    typedef std::map<String, ImagePair,
+                     StringFastLessCompare
+                     CEGUI_MAP_ALLOC(String, Image*)> ImageMap;
 
     //! ConstBaseIterator type definition.
     typedef ConstMapIterator<ImageMap> ImageIterator;
@@ -207,20 +210,14 @@ private:
     void elementEndLocal(const String& element);
 
     //! container type used to hold the registered Image types.
-    typedef std::unordered_map<String, ImageFactory*> ImageFactoryRegistry;
+    typedef std::map<String, ImageFactory*, StringFastLessCompare
+        CEGUI_MAP_ALLOC(String, ImageFactory*)> ImageFactoryRegistry;
 
     //! helper to delete an image given an map iterator.
     void destroy(ImageMap::iterator& iter);
 
     // XML parsing helper functions.
     void elementImagesetStart(const XMLAttributes& attributes);
-
-    // Get or create the Imageset's texture
-    void retrieveImagesetTexture(const String& name, const String& filename, const String &resource_group);
-
-    // Get or create the Imageset's SVGData
-    void retrieveImagesetSVGData(const String& name, const String& filename, const String &resource_group);
-
     void elementImageStart(const XMLAttributes& attributes);
     //! throw exception if file version is not supported.
     void validateImagesetFileVersion(const XMLAttributes& attrs);
@@ -239,13 +236,13 @@ template <typename T>
 void ImageManager::addImageType(const String& name)
 {
     if (isImageTypeAvailable(name))
-        throw AlreadyExistsException(
-            "Image type already exists: " + name);
+        CEGUI_THROW(AlreadyExistsException(
+            "Image type already exists: " + name));
 
-    d_factories[name] = new TplImageFactory<T>;
+    d_factories[name] = CEGUI_NEW_AO TplImageFactory<T>;
 
     Logger::getSingleton().logEvent(
-        "[ImageManager] Registered Image type: " + name);
+        "[CEGUI::ImageManager] Registered Image type: " + name);
 }
 
 //---------------------------------------------------------------------------//

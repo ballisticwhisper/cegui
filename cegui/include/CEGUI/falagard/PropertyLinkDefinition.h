@@ -39,6 +39,9 @@
 
 namespace CEGUI
 {
+//! \deprecated This will be removed in the next version as it has been replaced by Falagard_xmlHandler::ParentIdentifier
+extern const String S_parentIdentifier;
+
 /*!
 \brief
     Class representing a property that links to another property defined on
@@ -109,7 +112,7 @@ public:
     //------------------------------------------------------------------------//
     Property* clone() const
     {
-        return new PropertyLinkDefinition<T>(*this);
+        return CEGUI_NEW_AO PropertyLinkDefinition<T>(*this);
     }
 
 protected:
@@ -167,13 +170,13 @@ protected:
     void writeDefinitionXMLElementType(XMLSerializer& xml_stream) const
     {
         xml_stream.openTag(Falagard_xmlHandler::PropertyLinkDefinitionElement);
+        writeFalagardXMLAttributes(xml_stream);
+        writeDefinitionXMLAdditionalAttributes(xml_stream);
     }
 
     //------------------------------------------------------------------------//
-    virtual void writeDefinitionXMLAttributes(XMLSerializer& xml_stream) const
+    void writeDefinitionXMLAdditionalAttributes(XMLSerializer& xml_stream) const
     {
-        PropertyDefinitionBase::writeDefinitionXMLAttributes(xml_stream);
-
         if(FalagardPropertyBase<T>::d_dataType.compare(Falagard_xmlHandler::GenericDataType) != 0)
             xml_stream.attribute(Falagard_xmlHandler::TypeAttribute, FalagardPropertyBase<T>::d_dataType);
 
@@ -245,7 +248,7 @@ protected:
     //------------------------------------------------------------------------//
     typedef std::pair<String,String> StringPair;
     //! type used for the collection of targets.
-    typedef std::vector<StringPair> LinkTargetCollection;
+    typedef std::vector<StringPair CEGUI_VECTOR_ALLOC(StringPair)> LinkTargetCollection;
 
     //! collection of targets for this PropertyLinkDefinition.
     LinkTargetCollection d_targets;

@@ -47,20 +47,20 @@ public:
         set the groupID for this radio button
 
     \param group
-        uint32 value specifying the radio button group that this widget
+        ulong value specifying the radio button group that this widget
         belongs to.
     */
-    void setGroupID(std::uint32_t group);
+    void setGroupID(ulong group);
 
     /*!
     \brief
         return the groupID assigned to this radio button
 
     \return
-        uint32 value that identifies the Radio Button group this widget
+        ulong value that identifies the Radio Button group this widget
         belongs to.
     */
-    std::uint32_t getGroupID() const    { return d_groupID; }
+    ulong getGroupID() const    { return d_groupID; }
 
     /*!
     \brief
@@ -86,7 +86,7 @@ protected:
     bool getPostClickSelectState() const;
     void onSelectStateChange(WindowEventArgs& e);
 
-    std::uint32_t d_groupID;
+    ulong d_groupID;
 };
 
 }

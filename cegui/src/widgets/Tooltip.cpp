@@ -66,8 +66,8 @@ namespace CEGUI
         setClippedByParent(false);
         setDestroyedByParent(false);
         setAlwaysOnTop(true);
-        setCursorPassThroughEnabled(true);
-
+        setMousePassThroughEnabled(true);
+        
         // we need updates even when not visible
         setUpdateMode(WUM_ALWAYS);
 
@@ -80,46 +80,46 @@ namespace CEGUI
 
     void Tooltip::positionSelf(void)
     {
-        // no recursion allowed for this function!
+        // no recusion allowed for this function!
         if (d_inPositionSelf)
             return;
 
         d_inPositionSelf = true;
 
-        const Cursor& indicator = getGUIContext().getCursor();
-        const Rectf screen(glm::vec2(0, 0), getRootContainerSize());
+        MouseCursor& cursor = getGUIContext().getMouseCursor();
+        Rectf screen(Vector2f(0, 0), getRootContainerSize());
         Rectf tipRect(getUnclippedOuterRect().get());
-        const Image* cursor_image = indicator.getImage();
+        const Image* mouseImage = cursor.getImage();
 
-        const glm::vec2 cursor_pos(indicator.getPosition());
-        Sizef cursor_size(0,0);
+        Vector2f mousePos(cursor.getPosition());
+        Sizef mouseSz(0,0);
 
-        if (cursor_image)
+        if (mouseImage)
         {
-            cursor_size = cursor_image->getRenderedSize();
+            mouseSz = mouseImage->getRenderedSize();
         }
 
-        glm::vec2 tmpPos(cursor_pos.x + cursor_size.d_width, cursor_pos.y + cursor_size.d_height);
+        Vector2f tmpPos(mousePos.d_x + mouseSz.d_width, mousePos.d_y + mouseSz.d_height);
         tipRect.setPosition(tmpPos);
 
         // if tooltip would be off the right of the screen,
-        // reposition to the other side of the cursor.
+        // reposition to the other side of the mouse cursor.
         if (screen.right() < tipRect.right())
         {
-            tmpPos.x = cursor_pos.x - tipRect.getWidth() - 5;
+            tmpPos.d_x = mousePos.d_x - tipRect.getWidth() - 5;
         }
 
         // if tooltip would be off the bottom of the screen,
-        // reposition to the other side of the cursor.
+        // reposition to the other side of the mouse cursor.
         if (screen.bottom() < tipRect.bottom())
         {
-            tmpPos.y = cursor_pos.y - tipRect.getHeight() - 5;
+            tmpPos.d_y = mousePos.d_y - tipRect.getHeight() - 5;
         }
 
         // set final position of tooltip window.
         setPosition(
-            UVector2(cegui_absdim(tmpPos.x),
-                     cegui_absdim(tmpPos.y)));
+            UVector2(cegui_absdim(tmpPos.d_x),
+                     cegui_absdim(tmpPos.d_y)));
 
         d_inPositionSelf = false;
     }
@@ -339,11 +339,11 @@ namespace CEGUI
         }
     }
 
-    void Tooltip::onCursorEnters(CursorInputEventArgs& e)
+    void Tooltip::onMouseEnters(MouseEventArgs& e)
     {
         positionSelf();
 
-        Window::onCursorEnters(e);
+        Window::onMouseEnters(e);
     }
 
     void Tooltip::onTextChanged(WindowEventArgs& e)

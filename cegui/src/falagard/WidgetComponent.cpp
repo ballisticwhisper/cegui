@@ -31,19 +31,21 @@
 #include "CEGUI/Exceptions.h"
 #include <iostream>
 
+// Start of CEGUI namespace section
 namespace CEGUI
 {
-
     //! Default values
     const HorizontalAlignment WidgetComponent::HorizontalAlignmentDefault(HA_LEFT);
     const VerticalAlignment WidgetComponent::VerticalAlignmentDefault(VA_TOP);
 
 
-    WidgetComponent::WidgetComponent(const String& targetType,
-                                        const String& suffix,
-                                        const String& renderer,
-                                        bool autoWindow) :
-        d_targetType(targetType),
+    WidgetComponent::WidgetComponent(const String& type,
+                                     const String& look,
+                                     const String& suffix,
+                                     const String& renderer,
+                                     bool autoWindow) :
+        d_baseType(type),
+        d_imageryName(look),
         d_name(suffix),
         d_rendererType(renderer),
         d_autoWindow(autoWindow),
@@ -53,12 +55,16 @@ namespace CEGUI
 
     void WidgetComponent::create(Window& parent) const
     {
-        Window* widget = WindowManager::getSingleton().createWindow(d_targetType, d_name);
+        Window* widget = WindowManager::getSingleton().createWindow(d_baseType, d_name);
         widget->setAutoWindow(d_autoWindow);
 
         // set the window renderer
         if (!d_rendererType.empty())
             widget->setWindowRenderer(d_rendererType);
+
+        // set the widget look
+        if (!d_imageryName.empty())
+            widget->setLookNFeel(d_imageryName);
 
         // add the new widget to its parent
         parent.addChild(widget);
@@ -73,15 +79,15 @@ namespace CEGUI
 
         // initialise properties.  This is done last so that these properties can
         // override properties specified in the look assigned to the created widget.
-        for(PropertyInitialiserList::const_iterator curr = d_propertyInitialisers.begin(); curr != d_propertyInitialisers.end(); ++curr)
+        for(PropertiesList::const_iterator curr = d_properties.begin(); curr != d_properties.end(); ++curr)
         {
             (*curr).apply(*widget);
         }
 
         // link up the event actions
         for (EventActionList::const_iterator i = d_eventActions.begin();
-                i != d_eventActions.end();
-                ++i)
+             i != d_eventActions.end();
+             ++i)
         {
             (*i).initialiseWidget(*widget);
         }
@@ -95,8 +101,8 @@ namespace CEGUI
         Window* widget = parent.getChild(getWidgetName());
         // clean up up the event actions
         for (EventActionList::const_iterator i = d_eventActions.begin();
-                i != d_eventActions.end();
-                ++i)
+             i != d_eventActions.end();
+             ++i)
         {
             (*i).cleanupWidget(*widget);
         }
@@ -114,14 +120,24 @@ namespace CEGUI
         d_area = area;
     }
 
-    const String& WidgetComponent::getTargetType() const
+    const String& WidgetComponent::getBaseWidgetType() const
     {
-        return d_targetType;
+        return d_baseType;
     }
 
-    void WidgetComponent::setTargetType(const String& type)
+    void WidgetComponent::setBaseWidgetType(const String& type)
     {
-        d_targetType = type;
+        d_baseType = type;
+    }
+
+    const String& WidgetComponent::getWidgetLookName() const
+    {
+        return d_imageryName;
+    }
+
+    void WidgetComponent::setWidgetLookName(const String& look)
+    {
+        d_imageryName = look;
     }
 
     const String& WidgetComponent::getWidgetName() const
@@ -166,21 +182,21 @@ namespace CEGUI
 
     void WidgetComponent::addPropertyInitialiser(const PropertyInitialiser& initialiser)
     {
-        d_propertyInitialisers.push_back(initialiser);
+        d_properties.push_back(initialiser);
     }
 
     void WidgetComponent::removePropertyInitialiser(const String& name)
     {
-        for(PropertyInitialiserList::iterator i = d_propertyInitialisers.begin();
-                i < d_propertyInitialisers.end();
+        for(PropertiesList::iterator i = d_properties.begin();
+                i < d_properties.end();
                 ++i)
             if(i->getTargetPropertyName() == name)
-                d_propertyInitialisers.erase(i);
+                d_properties.erase(i);
     }
 
     void WidgetComponent::clearPropertyInitialisers()
     {
-        d_propertyInitialisers.clear();
+        d_properties.clear();
     }
 
     void WidgetComponent::setAutoWindow(bool is_auto)
@@ -205,19 +221,19 @@ namespace CEGUI
 
     void WidgetComponent::layout(const Window& owner) const
     {
-        try
+        CEGUI_TRY
         {
             Rectf pixelArea(d_area.getPixelRect(owner));
             URect window_area(cegui_absdim(pixelArea.left()),
-                                cegui_absdim(pixelArea.top()),
-                                cegui_absdim(pixelArea.right()),
-                                cegui_absdim(pixelArea.bottom()));
+                              cegui_absdim(pixelArea.top()),
+                              cegui_absdim(pixelArea.right()),
+                              cegui_absdim(pixelArea.bottom()));
 
             Window* wnd = owner.getChild(d_name);
             wnd->setArea(window_area);
             wnd->notifyScreenAreaChanged();
         }
-        catch (UnknownObjectException&)
+        CEGUI_CATCH (UnknownObjectException&)
         {}
     }
 
@@ -226,18 +242,21 @@ namespace CEGUI
         // output opening tag
         xml_stream.openTag(Falagard_xmlHandler::ChildElement)
             .attribute(Falagard_xmlHandler::NameSuffixAttribute, d_name)
-            .attribute(Falagard_xmlHandler::TypeAttribute, d_targetType);
+            .attribute(Falagard_xmlHandler::TypeAttribute, d_baseType);
+
+        if (!d_imageryName.empty())
+            xml_stream.attribute(Falagard_xmlHandler::LookAttribute, d_imageryName);
 
         if (!d_rendererType.empty())
             xml_stream.attribute(Falagard_xmlHandler::RendererAttribute, d_rendererType);
 
         if (!d_autoWindow)
-            xml_stream.attribute(Falagard_xmlHandler::AutoWindowAttribute, PropertyHelper<bool>::ValueFalse);
+            xml_stream.attribute(Falagard_xmlHandler::AutoWindowAttribute, PropertyHelper<bool>::False);
 
         // Output <EventAction> elements
         for (EventActionList::const_iterator i = d_eventActions.begin();
-                i != d_eventActions.end();
-                ++i)
+             i != d_eventActions.end();
+             ++i)
         {
             (*i).writeXMLToStream(xml_stream);
         }
@@ -262,7 +281,7 @@ namespace CEGUI
         }
 
         //output property initialisers
-        for (PropertyInitialiserList::const_iterator prop = d_propertyInitialisers.begin(); prop != d_propertyInitialisers.end(); ++prop)
+        for (PropertiesList::const_iterator prop = d_properties.begin(); prop != d_properties.end(); ++prop)
         {
             (*prop).writeXMLToStream(xml_stream);
         }
@@ -273,8 +292,8 @@ namespace CEGUI
 
     const PropertyInitialiser* WidgetComponent::findPropertyInitialiser(const String& propertyName) const
     {
-        PropertyInitialiserList::const_reverse_iterator i = d_propertyInitialisers.rbegin();
-        while (i != d_propertyInitialisers.rend())
+        PropertiesList::const_reverse_iterator i = d_properties.rbegin();
+        while (i != d_properties.rend())
         {
             if ((*i).getTargetPropertyName() == propertyName)
                 return &(*i);
@@ -283,8 +302,21 @@ namespace CEGUI
         return 0;
     }
 
+
+    WidgetComponent::PropertyIterator WidgetComponent::getPropertyIterator() const
+    {
+        return PropertyIterator(d_properties.begin(),d_properties.end());
+    }
+
+    WidgetComponent::EventActionIterator
+    WidgetComponent::getEventActionIterator() const
+    {
+        return EventActionIterator(d_eventActions.begin(),
+                                   d_eventActions.end());
+    }
+
     bool WidgetComponent::handleFontRenderSizeChange(Window& window,
-                                                        const Font* font) const
+                                                     const Font* font) const
     {
         if (d_area.handleFontRenderSizeChange(window, font))
         {
@@ -295,14 +327,4 @@ namespace CEGUI
         return false;
     }
 
-const WidgetComponent::PropertyInitialiserList& WidgetComponent::getPropertyInitialisers() const
-{
-    return d_propertyInitialisers;
-}
-
-const WidgetComponent::EventActionList& WidgetComponent::getEventActions() const
-{
-    return d_eventActions;
-}
-
-}
+} // End of  CEGUI namespace section

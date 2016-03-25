@@ -50,8 +50,8 @@ IrrlichtRenderer& IrrlichtRenderer::bootstrapSystem(irr::IrrlichtDevice& device,
     System::performVersionTest(CEGUI_VERSION_ABI, abi, CEGUI_FUNCTION_NAME);
 
     if (System::getSingletonPtr())
-        throw InvalidRequestException(
-            "CEGUI::System object is already initialised.");
+        CEGUI_THROW(InvalidRequestException(
+            "CEGUI::System object is already initialised."));
 
     IrrlichtRenderer& renderer = IrrlichtRenderer::create(device);
     IrrlichtResourceProvider& rp =
@@ -67,8 +67,8 @@ void IrrlichtRenderer::destroySystem()
 {
     System* const sys = System::getSingletonPtr();
     if (!sys)
-        throw InvalidRequestException(
-            "CEGUI::System object is not created or was already destroyed.");
+        CEGUI_THROW(InvalidRequestException(
+            "CEGUI::System object is not created or was already destroyed."));
 
     IrrlichtRenderer* const renderer =
         static_cast<IrrlichtRenderer*>(sys->getRenderer());
@@ -169,12 +169,12 @@ void IrrlichtRenderer::destroyAllGeometryBuffers()
 }
 
 //----------------------------------------------------------------------------//
-TextureTarget* IrrlichtRenderer::createTextureTarget(bool addStencilBuffer)
+TextureTarget* IrrlichtRenderer::createTextureTarget()
 {
     if (!d_driver->queryFeature(irr::video::EVDF_RENDER_TO_TARGET))
         return 0;
 
-    TextureTarget* tt = new IrrlichtTextureTarget(*this, *d_driver, addStencilBuffer);
+    TextureTarget* tt = new IrrlichtTextureTarget(*this, *d_driver);
     d_textureTargets.push_back(tt);
     return tt;
 }
@@ -246,8 +246,8 @@ Texture& IrrlichtRenderer::createTexture(const String& name, const Sizef& size)
 void IrrlichtRenderer::throwIfNameExists(const String& name) const
 {
     if (d_textures.find(name) != d_textures.end())
-        throw AlreadyExistsException(
-            "[IrrlichtRenderer] Texture already exists: " + name);
+        CEGUI_THROW(AlreadyExistsException(
+            "[IrrlichtRenderer] Texture already exists: " + name));
 }
 
 //----------------------------------------------------------------------------//
@@ -298,8 +298,8 @@ Texture& IrrlichtRenderer::getTexture(const String& name) const
     TextureMap::const_iterator i = d_textures.find(name);
     
     if (i == d_textures.end())
-        throw UnknownObjectException(
-            "[IrrlichtRenderer] Texture does not exist: " + name);
+        CEGUI_THROW(UnknownObjectException(
+            "[IrrlichtRenderer] Texture does not exist: " + name));
 
     return *i->second;
 }
@@ -342,13 +342,13 @@ const Sizef& IrrlichtRenderer::getDisplaySize() const
 }
 
 //----------------------------------------------------------------------------//
-const glm::vec2& IrrlichtRenderer::getDisplayDPI() const
+const Vector2f& IrrlichtRenderer::getDisplayDPI() const
 {
     return d_displayDPI;
 }
 
 //----------------------------------------------------------------------------//
-unsigned int IrrlichtRenderer::getMaxTextureSize() const
+uint IrrlichtRenderer::getMaxTextureSize() const
 {
     return d_maxTextureSize;
 }
@@ -403,7 +403,7 @@ Sizef IrrlichtRenderer::getAdjustedTextureSize(const Sizef& sz) const
 
     // if we can't support non square textures, make size square.
     if (!d_supportsNSquareTextures)
-        out.d_width = out.d_height = std::max(out.d_width, out.d_height);
+        out.d_width = out.d_height = ceguimax(out.d_width, out.d_height);
 
     return out;
 }
@@ -411,7 +411,7 @@ Sizef IrrlichtRenderer::getAdjustedTextureSize(const Sizef& sz) const
 //----------------------------------------------------------------------------//
 float IrrlichtRenderer::getNextPOTSize(const float f)
 {
-    unsigned int size = static_cast<unsigned int>(f);
+    uint size = static_cast<uint>(f);
 
     // if not power of 2
     if ((size & (size - 1)) || !size)
@@ -432,12 +432,6 @@ float IrrlichtRenderer::getNextPOTSize(const float f)
 const IrrlichtEventPusher* IrrlichtRenderer::getEventPusher() const
 {
     return d_eventPusher;
-}
-
-//----------------------------------------------------------------------------//
-bool IrrlichtRenderer::isTexCoordSystemFlipped() const
-{
-    return false;
 }
 
 //----------------------------------------------------------------------------//

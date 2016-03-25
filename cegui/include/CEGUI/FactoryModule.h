@@ -41,7 +41,8 @@ namespace CEGUI
 {
 class FactoryRegisterer;
 
-class CEGUIEXPORT FactoryModule
+class CEGUIEXPORT FactoryModule :
+    public AllocatedObject<FactoryModule>
 {
 public:
     //! Destructor.
@@ -49,15 +50,16 @@ public:
     //! Register the factory for objects of the specified type.
     void registerFactory(const String& type_name);
     //! Register factories for all object types in the module.
-    unsigned int registerAllFactories();
+    uint registerAllFactories();
     //! Unregister the factory for objects of the specified type.
     void unregisterFactory(const String& type_name);
     //! Unregister factories for all object types in the module.
-    unsigned int unregisterAllFactories();
+    uint unregisterAllFactories();
 
 protected:
     //! Collection type that holds pointers to the factory registerer objects.
-    typedef std::vector<FactoryRegisterer*> FactoryRegistry;
+    typedef std::vector<FactoryRegisterer*
+        CEGUI_VECTOR_ALLOC(FactoryRegisterer*)> FactoryRegistry;
     //! The collection of factorty registerer object pointers.
     FactoryRegistry d_registry;
 };

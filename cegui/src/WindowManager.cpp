@@ -35,7 +35,6 @@
 #include "CEGUI/XMLParser.h"
 #include "CEGUI/RenderEffectManager.h"
 #include "CEGUI/RenderingWindow.h"
-#include "CEGUI/SharedStringStream.h"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -69,10 +68,10 @@ WindowManager::WindowManager(void) :
     d_uid_counter(0),
     d_lockCount(0)
 {
-    String addressStr = SharedStringstream::GetPointerAddressAsString(this);
-
+    char addr_buff[32];
+    sprintf(addr_buff, "(%p)", static_cast<void*>(this));
     Logger::getSingleton().logEvent(
-        "CEGUI::WindowManager Singleton created. (" + addressStr + ")");
+        "CEGUI::WindowManager singleton created " + String(addr_buff));
 }
 
 
@@ -84,10 +83,10 @@ WindowManager::~WindowManager(void)
 	destroyAllWindows();
     cleanDeadPool();
 
-    String addressStr = SharedStringstream::GetPointerAddressAsString(this);
-
+    char addr_buff[32];
+    sprintf(addr_buff, "(%p)", static_cast<void*>(this));
     Logger::getSingleton().logEvent(
-        "CEGUI::WindowManager singleton destroyed (" + addressStr + ")");
+        "CEGUI::WindowManager singleton destroyed " + String(addr_buff));
 }
 
 
@@ -98,8 +97,8 @@ Window* WindowManager::createWindow(const String& type, const String& name)
 {
     // only allow creation of Window objects if we are in unlocked state
     if (isLocked())
-        throw InvalidRequestException(
-            "WindowManager is in the locked state.");
+        CEGUI_THROW(InvalidRequestException(
+            "WindowManager is in the locked state."));
 
     String finalName(name.empty() ? generateUniqueWindowName() : name);
 
@@ -108,9 +107,10 @@ Window* WindowManager::createWindow(const String& type, const String& name)
 
     Window* newWindow = factory->createWindow(finalName);
 
-    String addressStr = SharedStringstream::GetPointerAddressAsString(newWindow);
+    char addr_buff[32];
+    sprintf(addr_buff, "(%p)", static_cast<void*>(newWindow));
     Logger::getSingleton().logEvent("Window '" + finalName +"' of type '" +
-        type + "' has been created. " + addressStr, Informative);
+        type + "' has been created. " + addr_buff, Informative);
 
     // see if we need to assign a look to this window
     if (wfMgr.isFalagardMappedType(type))
@@ -193,12 +193,13 @@ void WindowManager::destroyWindow(Window* window)
                   d_windowRegistry.end(),
                   window);
 
-    String addressStr = SharedStringstream::GetPointerAddressAsString(&window);
+    char addr_buff[32];
+    sprintf(addr_buff, "(%p)", static_cast<void*>(&window));
 
 	if (iter == d_windowRegistry.end())
     {
         Logger::getSingleton().logEvent("[WindowManager] Attempt to delete "
-            "Window that does not exist!  Address was: " + addressStr +
+            "Window that does not exist!  Address was: " + String(addr_buff) +
             ". WARNING: This could indicate a double-deletion issue!!",
             Errors);
         return;
@@ -207,7 +208,7 @@ void WindowManager::destroyWindow(Window* window)
     d_windowRegistry.erase(iter);
 
     Logger::getSingleton().logEvent("Window at '" + window->getNamePath() +
-        "' will be added to dead pool. " + addressStr, Informative);
+        "' will be added to dead pool. " + addr_buff, Informative);
 
     // do 'safe' part of cleanup
     window->destroy();
@@ -251,14 +252,14 @@ Window* WindowManager::loadLayoutFromContainer(const RawDataContainer& source, P
     GUILayout_xmlHandler handler(callback, userdata);
 
     // do parse (which uses handler to create actual data)
-    try
+    CEGUI_TRY
     {
         System::getSingleton().getXMLParser()->parseXML(handler, source, GUILayoutSchemaName);
     }
-    catch (...)
+    CEGUI_CATCH(...)
     {
         Logger::getSingleton().logEvent("WindowManager::loadWindowLayout - loading of layout from a RawDataContainer failed.", Errors);
-        throw;
+        CEGUI_RETHROW;
     }
 
     // log the completion of loading
@@ -271,8 +272,8 @@ Window* WindowManager::loadLayoutFromFile(const String& filename, const String& 
 {
 	if (filename.empty())
 	{
-		throw InvalidRequestException(
-            "Filename supplied for gui-layout loading must be valid.");
+		CEGUI_THROW(InvalidRequestException(
+            "Filename supplied for gui-layout loading must be valid."));
 	}
 
 	// log the fact we are about to load a layout
@@ -282,15 +283,15 @@ Window* WindowManager::loadLayoutFromFile(const String& filename, const String& 
     GUILayout_xmlHandler handler(callback, userdata);
 
 	// do parse (which uses handler to create actual data)
-	try
+	CEGUI_TRY
 	{
         System::getSingleton().getXMLParser()->parseXMLFile(handler,
             filename, GUILayoutSchemaName, resourceGroup.empty() ? d_defaultResourceGroup : resourceGroup);
 	}
-	catch (...)
+	CEGUI_CATCH(...)
 	{
         Logger::getSingleton().logEvent("WindowManager::loadLayoutFromFile - loading of layout from file '" + filename +"' failed.", Errors);
-        throw;
+        CEGUI_RETHROW;
 	}
 
     // log the completion of loading
@@ -308,14 +309,14 @@ Window* WindowManager::loadLayoutFromString(const String& source, PropertyCallba
     GUILayout_xmlHandler handler(callback, userdata);
 
     // do parse (which uses handler to create actual data)
-    try
+    CEGUI_TRY
     {
         System::getSingleton().getXMLParser()->parseXMLString(handler, source, GUILayoutSchemaName);
     }
-    catch (...)
+    CEGUI_CATCH(...)
     {
         Logger::getSingleton().logEvent("WindowManager::loadLayoutFromString - loading of layout from string failed.", Errors);
-        throw;
+        CEGUI_RETHROW;
     }
 
     // log the completion of loading
@@ -367,19 +368,18 @@ String WindowManager::getLayoutAsString(const Window& window) const
     std::ostringstream str;
     writeLayoutToStream(window, str);
 
-    return String(str.str().c_str());
+    return String(reinterpret_cast<const encoded_char*>(str.str().c_str()));
 }
 
 //----------------------------------------------------------------------------//
 void WindowManager::saveLayoutToFile(const Window& window,
                                      const String& filename) const
 {
-    std::ofstream stream;
-    stream << filename;
+    std::ofstream stream(filename.c_str());
 
     if (!stream.good())
-        throw FileIOException(
-            "failed to create stream for writing.");
+        CEGUI_THROW(FileIOException(
+            "failed to create stream for writing."));
 
     writeLayoutToStream(window, stream);
 }
@@ -387,10 +387,10 @@ void WindowManager::saveLayoutToFile(const Window& window,
 String WindowManager::generateUniqueWindowName()
 {
     const String ret = GeneratedWindowNameBase +
-        PropertyHelper<std::uint32_t>::toString(d_uid_counter);
+        PropertyHelper<unsigned long>::toString(d_uid_counter);
 
     // update counter for next time
-    std::uint32_t old_uid = d_uid_counter;
+    unsigned long old_uid = d_uid_counter;
     ++d_uid_counter;
 
     // log if we ever wrap-around (which should be pretty unlikely)

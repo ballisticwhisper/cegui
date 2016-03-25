@@ -47,7 +47,8 @@ namespace CEGUI
 \brief
     Base-class for the assignable WindowRenderer object
 */
-class CEGUIEXPORT WindowRenderer
+class CEGUIEXPORT WindowRenderer :
+    public AllocatedObject<WindowRenderer>
 {
 public:
     /*************************************************************************
@@ -77,13 +78,13 @@ public:
     **************************************************************************/
     /*!
     \brief
-        Creates the render geometry.
+        Populate render cache.
 
         This method must be implemented by all window renderers and should
         perform the rendering operations needed for this widget.
         Normally using the Falagard API...
     */
-    virtual void createRenderGeometry() = 0;
+    virtual void render() = 0;
 
     /*!
     \brief
@@ -138,7 +139,7 @@ public:
         Perform any updates needed because the given font's render size has
         changed.
 
-    \note
+    /note
         This base implementation deals with updates needed for various
         definitions in the assigned widget look.  If you override, you should
         generally always call this base class implementation.
@@ -151,89 +152,6 @@ public:
         - false if no action was taken (i.e font is not used here).
     */
     virtual bool handleFontRenderSizeChange(const Font* const font);
-
-    /*!
-    \brief
-        Get the width of the content of the window.
-
-        See the documentaion for "Window::getContentWidth" for more details.
-
-    \see Window::getContentWidth
-    */
-    virtual float getContentWidth() const;
-
-    /*!
-    \brief
-        Get the height of the content of the window.
-
-        See the documentaion for "Window::getContentHeight" for more details.
-
-    \see Window::getContentHeight
-    */
-    virtual float getContentHeight() const;
-
-    /*!
-    \brief
-        Get a lower bound for the width of the area of the window which is
-        reserved for content as an affine function of the window width.
-
-        See the documentaion for
-        "Window::getWidthOfAreaReservedForContentLowerBoundAsFuncOfWindowWidth"
-        for more details.
-    
-    \see Window::getWidthOfAreaReservedForContentLowerBoundAsFuncOfWindowWidth
-    */
-    virtual UDim getWidthOfAreaReservedForContentLowerBoundAsFuncOfWindowWidth() const;
-
-    /*!
-    \brief
-        Get a lower bound for the height of the area of the window which is
-        reserved for content as an affine function of the window height.
-
-        See the documentaion for
-        "Window::getHeightOfAreaReservedForContentLowerBoundAsFuncOfWindowHeight"
-        for more details.
-    
-    \see Window::getHeightOfAreaReservedForContentLowerBoundAsFuncOfWindowHeight
-    */
-    virtual UDim getHeightOfAreaReservedForContentLowerBoundAsFuncOfWindowHeight() const;
-
-    /*!
-    \brief
-        Set the size of the window to the minimal value in which the whole
-        window content is visible without the need for scrollbars (if possible),
-        and while the content remains "intact" (if possible).
-
-        See the documentaion for "Window::adjustSizeToContent" for more details.
-
-    \see Window::adjustSizeToContent
-    */
-    virtual void adjustSizeToContent();
-
-    /*!
-    \brief
-        Return whether setting the window size to "window_size" would make the
-        whole window content visible without the need for scrollbars (if
-        possible), and while the content remains "intact" (if possible).
-
-        See the documentaion for "Window::contentFitsForSpecifiedElementSize"
-        for more details.
-
-    \see Window::contentFitsForSpecifiedElementSize
-    */
-    virtual bool contentFitsForSpecifiedWindowSize(const Sizef& window_size) const;
-
-    /*!
-    \brief
-        Return whether the whole window content is visible without the need for
-        scrollbars (if possible), and while the content remains "intact" (if
-        possible).
-
-        See the documentaion for "Window::contentFits" for more details.
-
-    \see Window::contentFits
-    */
-    virtual bool contentFits() const;
 
 protected:
     /*************************************************************************
@@ -300,7 +218,8 @@ protected:
     //! type used for entries in the PropertyList.
     typedef std::pair<Property*, bool> PropertyEntry;
     //! type to use for the property list.
-    typedef std::vector<PropertyEntry> PropertyList;
+    typedef std::vector<PropertyEntry
+        CEGUI_VECTOR_ALLOC(PropertyEntry)> PropertyList;
     PropertyList d_properties;  //!< The list of properties that this windowrenderer will be handling.
 
     // Window is friend so it can manipulate our 'd_window' member directly.

@@ -626,8 +626,8 @@ public:
             return Layout;
 
         default:
-            throw InvalidRequestException(
-                "Invalid enumeration value given.");
+            CEGUI_THROW(InvalidRequestException(
+                "Invalid enumeration value given."));
         }
     }
 
@@ -639,9 +639,9 @@ public:
         if (str == Layout)
             return CEA_LAYOUT;
 
-        throw InvalidRequestException(
+        CEGUI_THROW(InvalidRequestException(
             "'" + str +
-            "' does not represent a ChildEventAction enumerated value.");
+            "' does not represent a ChildEventAction enumerated value."));
     }
 
     static const CEGUI::String Redraw;

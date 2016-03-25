@@ -84,11 +84,11 @@ void TabButton::onClicked(WindowEventArgs& e)
 
 
 /*************************************************************************
-    Handler for cursor press events
+	Handler for mouse button release events
 *************************************************************************/
-void TabButton::onCursorPressHold(CursorInputEventArgs& e)
+void TabButton::onMouseButtonDown(MouseEventArgs& e)
 {
-    if (e.source == CIS_Middle)
+    if (e.button == MiddleButton)
     {
         captureInput ();
         ++e.handled;
@@ -98,21 +98,21 @@ void TabButton::onCursorPressHold(CursorInputEventArgs& e)
     }
 
 	// default handling
-    ButtonBase::onCursorPressHold(e);
+	ButtonBase::onMouseButtonDown(e);
 }
 
-void TabButton::onCursorActivate(CursorInputEventArgs& e)
+void TabButton::onMouseButtonUp(MouseEventArgs& e)
 {
-    if ((e.source == CIS_Left) && isPushed())
+	if ((e.button == LeftButton) && isPushed())
 	{
 		Window* sheet = getGUIContext().getRootWindow();
 
 		if (sheet)
 		{
-            // if cursor was released over this widget
-            // (use cursor position, as e.position has been unprojected)
+			// if mouse was released over this widget
+            // (use mouse position, as e.position has been unprojected)
 			if (this == sheet->getTargetChildAtPosition(
-                                    getGUIContext().getCursor().getPosition()))
+                                    getGUIContext().getMouseCursor().getPosition()))
 			{
 				// fire event
 				WindowEventArgs args(this);
@@ -122,7 +122,7 @@ void TabButton::onCursorActivate(CursorInputEventArgs& e)
 
 		++e.handled;
     }
-    else if (e.source == CIS_Middle)
+    else if (e.button == MiddleButton)
     {
         d_dragging = false;
         releaseInput ();
@@ -130,10 +130,10 @@ void TabButton::onCursorActivate(CursorInputEventArgs& e)
     }
 
 	// default handling
-    ButtonBase::onCursorActivate(e);
+	ButtonBase::onMouseButtonUp(e);
 }
 
-void TabButton::onCursorMove(CursorInputEventArgs& e)
+void TabButton::onMouseMove(MouseEventArgs& e)
 {
     if (d_dragging)
     {
@@ -142,15 +142,15 @@ void TabButton::onCursorMove(CursorInputEventArgs& e)
     }
 
 	// default handling
-	ButtonBase::onCursorMove(e);
+	ButtonBase::onMouseMove(e);
 }
 
-void TabButton::onScroll(CursorInputEventArgs& e)
+void TabButton::onMouseWheel(MouseEventArgs& e)
 {
     fireEvent(EventScrolled, e, EventNamespace);
 
 	// default handling
-	ButtonBase::onCursorMove(e);
+	ButtonBase::onMouseMove(e);
 }
 
 } // End of  CEGUI namespace section

@@ -44,10 +44,10 @@ class OpenGLESTexture;
 
 //! OpenGLESFBOTextureTarget - allows rendering to an OpenGLES texture via FBO.
 class OPENGLES_GUIRENDERER_API OpenGLESFBOTextureTarget :
-    public OpenGLESRenderTarget
+    public OpenGLESRenderTarget<TextureTarget>
 {
 public:
-    OpenGLESFBOTextureTarget(OpenGLESRenderer& owner, bool addStencilBuffer);
+    OpenGLESFBOTextureTarget(OpenGLESRenderer& owner);
     virtual ~OpenGLESFBOTextureTarget();
 
     // overrides from OpenGLESRenderTarget
@@ -59,6 +59,7 @@ public:
     void clear();
     Texture& getTexture() const;
     void declareRenderSize(const Sizef& sz);
+    bool isRenderingInverted() const;
 
 	//! initialize FBO extension functions pointers
 	static void initializedFBOExtension();
@@ -83,7 +84,7 @@ protected:
     //! we use this to wrap d_texture so it can be used by the core CEGUI lib.
     OpenGLESTexture* d_CEGUITexture;
     //! static member var used to generate unique texture names.
-    static std::uint32_t s_textureNumber;
+    static uint s_textureNumber;
 };
 
 } // End of  CEGUI namespace section
